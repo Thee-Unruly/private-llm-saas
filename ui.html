@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ML/AI Flowchart — Telecom Data Platform</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0D1117;
+            font-family: 'IBM Plex Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 24px 80px;
+            min-height: 100vh;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #E6EDF3;
+            letter-spacing: -0.01em;
+        }
+
+        .page-title p {
+            font-size: 13px;
+            color: #7D8590;
+            margin-top: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+            filter: drop-shadow(0 8px 40px rgba(0, 0, 0, 0.5));
+        }
+
+        /* node styles */
+        .node-process rect {
+            rx: 6;
+            ry: 6;
+        }
+
+        .node-decision polygon {}
+
+        .node-term rect {
+            rx: 24;
+            ry: 24;
+        }
+
+        .node-store rect {
+            rx: 6;
+            ry: 6;
+        }
+
+        /* tooltip */
+        .tip {
+            position: fixed;
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #C9D1D9;
+            pointer-events: none;
+            max-width: 240px;
+            line-height: 1.55;
+            display: none;
+            z-index: 999;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-title">
+        <h1>ML / AI Lifecycle — End-to-End Flowchart</h1>
+        <p>L7 · Telecom Data Platform · Huawei Cloud · v3.0 · Hover nodes for details</p>
+    </div>
+
+    <div class="tip" id="tip"></div>
+
+    <svg viewBox="0 0 900 2620" width="900" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <!-- Arrow markers -->
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#4493F8" />
+            </marker>
+            <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#3FB950" />
+            </marker>
+            <marker id="arr-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#F85149" />
+            </marker>
+            <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#D29922" />
+            </marker>
+            <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#39C5CF" />
+            </marker>
+            <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#BC8CFF" />
+            </marker>
+
+            <!-- Gradients -->
+            <linearGradient id="g-blue" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#1C3A6E" />
+                <stop offset="100%" stop-color="#112240" />
+            </linearGradient>
+            <linearGradient id="g-teal" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#0D3B35" />
+                <stop offset="100%" stop-color="#072B26" />
+            </linearGradient>
+            <linearGradient id="g-green" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#0D3320" />
+                <stop offset="100%" stop-color="#072415" />
+            </linearGradient>
+            <linearGradient id="g-amber" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3B2800" />
+                <stop offset="100%" stop-color="#271C00" />
+            </linearGradient>
+            <linearGradient id="g-rose" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3B0D10" />
+                <stop offset="100%" stop-color="#270709" />
+            </linearGradient>
+            <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#2D1B5E" />
+                <stop offset="100%" stop-color="#1E1040" />
+            </linearGradient>
+            <linearGradient id="g-cyan" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#0A3040" />
+                <stop offset="100%" stop-color="#062030" />
+            </linearGradient>
+            <linearGradient id="g-start" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#1C4E80" />
+                <stop offset="100%" stop-color="#0E3460" />
+            </linearGradient>
+            <linearGradient id="g-end" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#1A3A1A" />
+                <stop offset="100%" stop-color="#0E280E" />
+            </linearGradient>
+
+            <!-- Glow filters -->
+            <filter id="glow-blue" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+            <filter id="glow-green">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+
+        <!-- ═══════════════════════════════════════════════
+       BACKGROUND PANELS (phase lanes)
+  ═══════════════════════════════════════════════ -->
+        <!-- Phase 1 -->
+        <rect x="16" y="90" width="868" height="110" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="108" font-family="IBM Plex Mono" font-size="9" fill="#4493F8" letter-spacing="2">PHASE 01 · DATA
+            ACCESS</text>
+
+        <!-- Phase 2 -->
+        <rect x="16" y="220" width="868" height="230" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="238" font-family="IBM Plex Mono" font-size="9" fill="#39C5CF" letter-spacing="2">PHASE 02 ·
+            EXPERIMENTATION &amp; TUNING</text>
+
+        <!-- Phase 3 -->
+        <rect x="16" y="470" width="868" height="290" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="488" font-family="IBM Plex Mono" font-size="9" fill="#3FB950" letter-spacing="2">PHASE 03 ·
+            TRAINING &amp; EVALUATION</text>
+
+        <!-- Phase 4 -->
+        <rect x="16" y="780" width="868" height="230" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="798" font-family="IBM Plex Mono" font-size="9" fill="#D29922" letter-spacing="2">PHASE 04 ·
+            REGISTRY &amp; DEPLOYMENT</text>
+
+        <!-- Phase 5 -->
+        <rect x="16" y="1030" width="868" height="350" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="1048" font-family="IBM Plex Mono" font-size="9" fill="#BC8CFF" letter-spacing="2">PHASE 05 ·
+            SERVING</text>
+
+        <!-- Phase 6 -->
+        <rect x="16" y="1400" width="868" height="580" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="1418" font-family="IBM Plex Mono" font-size="9" fill="#F85149" letter-spacing="2">PHASE 06 ·
+            MONITORING &amp; DRIFT</text>
+
+        <!-- Phase 7 -->
+        <rect x="16" y="2000" width="868" height="200" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="30" y="2018" font-family="IBM Plex Mono" font-size="9" fill="#9E6CFE" letter-spacing="2">PHASE 07 ·
+            RETIREMENT &amp; AUDIT</text>
+
+        <!-- END -->
+        <rect x="16" y="2220" width="868" height="90" rx="8" fill="#0D1117" stroke="#21262D" stroke-width="1" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       NODE: START
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Entry point. A new model build or retraining cycle begins here — triggered either by the weekly Airflow schedule or an automatic drift alert from Step 10.">
+            <rect x="300" y="20" width="300" height="48" rx="24" fill="url(#g-start)" stroke="#4493F8"
+                stroke-width="1.5" />
+            <text x="450" y="40" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">START</text>
+            <text x="450" y="57" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">New build
+                · Weekly retrain · Drift trigger</text>
+        </g>
+        <!-- arrow down -->
+        <line x1="450" y1="68" x2="450" y2="110" stroke="#4493F8" stroke-width="1.5" marker-end="url(#arr)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 01 — Feature Access
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="PyIceberg reads versioned feature tables from MinIO (ml-features/) with time-travel for point-in-time correct joins. Redis provides live subscriber profiles. Output: Pandas/Dask DataFrame.">
+            <rect x="200" y="116" width="500" height="72" rx="6" fill="url(#g-blue)" stroke="#4493F8"
+                stroke-width="1.5" />
+            <text x="450" y="138" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#4493F8"
+                letter-spacing="1">STEP 01</text>
+            <text x="450" y="155" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Feature Access</text>
+            <text x="450" y="173" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">PyIceberg · MinIO ml-features/ · Redis subscriber cache</text>
+        </g>
+        <line x1="450" y1="188" x2="450" y2="228" stroke="#4493F8" stroke-width="1.5" marker-end="url(#arr)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 02 — Experiment Design
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="ML Engineer defines model architecture, feature sets, and evaluation metrics in Jupyter (hosted on CCE). Every run is auto-logged to MLflow Tracking — params, metrics, dataset hash, environment.">
+            <rect x="200" y="234" width="500" height="72" rx="6" fill="url(#g-cyan)" stroke="#39C5CF"
+                stroke-width="1.5" />
+            <text x="450" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#39C5CF"
+                letter-spacing="1">STEP 02</text>
+            <text x="450" y="273" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Experiment Design</text>
+            <text x="450" y="291" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">JupyterHub · MLflow Tracking · GitHub notebooks/</text>
+        </g>
+        <line x1="450" y1="306" x2="450" y2="336" stroke="#39C5CF" stroke-width="1.5" marker-end="url(#arr-cyan)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 03 — Hyperparameter Tuning
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="5-strategy tuning pipeline. Optuna Bayesian (TPE) is default for all production models. Early stopping via MedianPruner kills unpromising trials. All trial results auto-logged to MLflow via OptunaCallback.">
+            <rect x="200" y="342" width="500" height="96" rx="6" fill="url(#g-cyan)" stroke="#39C5CF"
+                stroke-width="1.5" />
+            <text x="450" y="362" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#39C5CF"
+                letter-spacing="1">STEP 03</text>
+            <text x="450" y="380" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Hyperparameter Tuning</text>
+            <!-- mini strategy boxes -->
+            <rect x="210" y="390" width="90" height="36" rx="4" fill="#0A1E2A" stroke="#39C5CF" stroke-width="0.8"
+                stroke-dasharray="3,2" />
+            <text x="255" y="405" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#39C5CF">Grid
+                Search</text>
+            <text x="255" y="419" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#4D6370">small
+                spaces</text>
+
+            <rect x="312" y="390" width="90" height="36" rx="4" fill="#0A1E2A" stroke="#39C5CF" stroke-width="0.8"
+                stroke-dasharray="3,2" />
+            <text x="357" y="405" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#39C5CF">Random
+                Search</text>
+            <text x="357" y="419" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#4D6370">medium
+                spaces</text>
+
+            <rect x="414" y="390" width="100" height="36" rx="4" fill="#0D2A30" stroke="#39C5CF" stroke-width="1.5" />
+            <text x="464" y="405" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#67E8F9"
+                font-weight="bold">✦ Optuna TPE</text>
+            <text x="464" y="419" text-anchor="middle" font-family="IBM Plex Mono" font-size="7"
+                fill="#4D6370">production default</text>
+
+            <rect x="526" y="390" width="80" height="36" rx="4" fill="#0A1E2A" stroke="#39C5CF" stroke-width="0.8"
+                stroke-dasharray="3,2" />
+            <text x="566" y="405" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#39C5CF">Early
+                Stop</text>
+            <text x="566" y="419" text-anchor="middle" font-family="IBM Plex Mono" font-size="7"
+                fill="#4D6370">MedianPruner</text>
+
+            <rect x="618" y="390" width="72" height="36" rx="4" fill="#0A1E2A" stroke="#39C5CF" stroke-width="0.8"
+                stroke-dasharray="3,2" />
+            <text x="654" y="405" text-anchor="middle" font-family="IBM Plex Mono" font-size="8"
+                fill="#39C5CF">Cross-Val</text>
+            <text x="654" y="419" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#4D6370">Kfold /
+                TS</text>
+        </g>
+        <line x1="450" y1="438" x2="450" y2="478" stroke="#39C5CF" stroke-width="1.5" marker-end="url(#arr-cyan)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 04 — Model Training
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Training submitted via Airflow KubernetesPodOperator (src/ml/models/). Each job runs in an isolated K8s pod. Weekly via dag_weekly_model_retrain.py. Two parallel tracks: classification and regression/time-series.">
+            <rect x="200" y="484" width="500" height="100" rx="6" fill="url(#g-teal)" stroke="#3FB950"
+                stroke-width="1.5" />
+            <text x="450" y="504" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3FB950"
+                letter-spacing="1">STEP 04</text>
+            <text x="450" y="522" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Model Training</text>
+            <text x="450" y="538" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Airflow
+                KubernetesPodOperator · src/ml/models/ · Isolated K8s pod</text>
+            <!-- two track boxes -->
+            <rect x="210" y="548" width="228" height="28" rx="4" fill="#062B20" stroke="#3FB950" stroke-width="0.8" />
+            <text x="324" y="566" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#6EE7B7">Churn
+                · SIM Fraud · ZAAD Fraud · Campaign</text>
+
+            <rect x="452" y="548" width="238" height="28" rx="4" fill="#062B20" stroke="#3FB950" stroke-width="0.8" />
+            <text x="571" y="566" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#6EE7B7">ARPU ·
+                CLV · Pricing · Network Congestion</text>
+        </g>
+        <line x1="450" y1="584" x2="450" y2="614" stroke="#3FB950" stroke-width="1.5" marker-end="url(#arr-green)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 05 — Evaluation & Explainability
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Compare runs in MLflow UI on AUC, F1, Precision, Recall, RMSE. SHAP computes feature importance for all tree-based models — outputs stored as MLflow artefacts for regulatory/audit use.">
+            <rect x="200" y="620" width="500" height="72" rx="6" fill="url(#g-teal)" stroke="#3FB950"
+                stroke-width="1.5" />
+            <text x="450" y="640" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#3FB950"
+                letter-spacing="1">STEP 05</text>
+            <text x="450" y="658" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Evaluation &amp; Explainability (SHAP)</text>
+            <text x="450" y="676" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">MLflow
+                UI · AUC · F1 · RMSE · SHAP feature importance</text>
+        </g>
+        <line x1="450" y1="692" x2="450" y2="722" stroke="#3FB950" stroke-width="1.5" marker-end="url(#arr-green)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       DECISION: Champion Better?
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Is the new candidate model better than the current Production model? Compare on held-out validation set. If YES → proceed to registration. If NO → return to Step 03 to retune.">
+            <!-- diamond -->
+            <polygon points="450,728 620,780 450,832 280,780" fill="#1A1E24" stroke="#D29922" stroke-width="1.8" />
+            <text x="450" y="774" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600"
+                fill="#E6EDF3">New model better than</text>
+            <text x="450" y="791" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600"
+                fill="#E6EDF3">current Production?</text>
+        </g>
+        <!-- YES → down -->
+        <line x1="450" y1="832" x2="450" y2="862" stroke="#3FB950" stroke-width="1.5" marker-end="url(#arr-green)" />
+        <text x="458" y="850" font-family="IBM Plex Mono" font-size="10" fill="#3FB950">YES</text>
+        <!-- NO → left loop back to step 03 -->
+        <path d="M280,780 L120,780 L120,413 L200,413" fill="none" stroke="#F85149" stroke-width="1.5"
+            stroke-dasharray="6,3" marker-end="url(#arr-red)" />
+        <text x="125" y="600" font-family="IBM Plex Mono" font-size="10" fill="#F85149"
+            transform="rotate(-90,125,600)">NO — Retune (Step 03)</text>
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 06 — Model Registration
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Champion model registered to MLflow Model Registry via REST API or UI. Semantic versioning applied. Transitions: None → Staging → Production. Artefacts stored in MinIO model-artifacts/.">
+            <rect x="200" y="868" width="500" height="72" rx="6" fill="url(#g-amber)" stroke="#D29922"
+                stroke-width="1.5" />
+            <text x="450" y="888" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#D29922"
+                letter-spacing="1">STEP 06</text>
+            <text x="450" y="906" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Model Registration</text>
+            <text x="450" y="924" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">MLflow
+                Registry · None → Staging → Production · MinIO artefacts</text>
+        </g>
+        <line x1="450" y1="940" x2="450" y2="970" stroke="#D29922" stroke-width="1.5" marker-end="url(#arr-amber)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 07 — Stage Promotion & Deployment
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Promoting to Production in MLflow is the only deployment action. model_loader.py auto-discovers the latest Production version at Flink/Airflow job startup. Zero-downtime hot-swap on Flink restart.">
+            <rect x="200" y="976" width="500" height="72" rx="6" fill="url(#g-amber)" stroke="#D29922"
+                stroke-width="1.5" />
+            <text x="450" y="996" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#D29922"
+                letter-spacing="1">STEP 07</text>
+            <text x="450" y="1014" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Stage Promotion &amp; Deployment</text>
+            <text x="450" y="1032" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">MLflow
+                Staging → Production · model_loader.py auto-discovery</text>
+        </g>
+        <line x1="450" y1="1048" x2="450" y2="1078" stroke="#D29922" stroke-width="1.5" marker-end="url(#arr-amber)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       PHASE 5 FORK — Real-Time vs Batch
+  ═══════════════════════════════════════════════ -->
+        <!-- fork line -->
+        <line x1="450" y1="1078" x2="450" y2="1098" stroke="#D29922" stroke-width="1.5" />
+        <line x1="270" y1="1098" x2="630" y2="1098" stroke="#BC8CFF" stroke-width="1.5" />
+        <line x1="270" y1="1098" x2="270" y2="1118" stroke="#BC8CFF" stroke-width="1.5" marker-end="url(#arr-purple)" />
+        <line x1="630" y1="1098" x2="630" y2="1118" stroke="#BC8CFF" stroke-width="1.5" marker-end="url(#arr-purple)" />
+        <text x="450" y="1094" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#BC8CFF">PARALLEL
+            SERVING PATHS</text>
+
+        <!-- STEP 08 — Real-Time -->
+        <g class="node"
+            data-tip="Apache Flink (PyFlink) jobs embed the Production model via model_loader.py. fraud_detector.py runs LightGBM in &lt;5s on Kafka streams. churn_scorer.py applies XGBoost with rolling 7-day window. FastAPI exposes scored results.">
+            <rect x="60" y="1124" width="380" height="100" rx="6" fill="url(#g-purple)" stroke="#BC8CFF"
+                stroke-width="1.5" />
+            <text x="250" y="1144" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#BC8CFF"
+                letter-spacing="1">STEP 08 · REAL-TIME</text>
+            <text x="250" y="1163" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Flink Streaming Serving</text>
+            <text x="250" y="1180" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">fraud_detector.py · churn_scorer.py</text>
+            <text x="250" y="1196" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">FastAPI
+                REST · Redis cache</text>
+            <rect x="72" y="1206" width="174" height="12" rx="3" fill="#1A0E2E" stroke="#BC8CFF" stroke-width="0.8" />
+            <text x="159" y="1215" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5"
+                fill="#BC8CFF">Latency: &lt; 5 seconds</text>
+            <rect x="256" y="1206" width="174" height="12" rx="3" fill="#1A0E2E" stroke="#BC8CFF" stroke-width="0.8" />
+            <text x="343" y="1215" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5"
+                fill="#BC8CFF">Output: Doris ADS + Redis</text>
+        </g>
+
+        <!-- STEP 09 — Batch -->
+        <g class="node"
+            data-tip="Airflow dag_churn_batch_score.py loads the champion model and scores all 1.5M subscribers nightly at 06:00. Results written to Doris ADS tables and pushed to Redis. Also runs CLV, segmentation, offer recommendations.">
+            <rect x="460" y="1124" width="380" height="100" rx="6" fill="url(#g-purple)" stroke="#BC8CFF"
+                stroke-width="1.5" />
+            <text x="650" y="1144" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#BC8CFF"
+                letter-spacing="1">STEP 09 · BATCH</text>
+            <text x="650" y="1163" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Nightly Batch Scoring</text>
+            <text x="650" y="1180" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">dag_churn_batch_score.py · 1.5M subscribers</text>
+            <text x="650" y="1196" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">ads_churn_scores · ads_clv_scores · ads_segments</text>
+            <rect x="472" y="1206" width="174" height="12" rx="3" fill="#1A0E2E" stroke="#BC8CFF" stroke-width="0.8" />
+            <text x="559" y="1215" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5"
+                fill="#BC8CFF">Schedule: Daily 06:00</text>
+            <rect x="656" y="1206" width="174" height="12" rx="3" fill="#1A0E2E" stroke="#BC8CFF" stroke-width="0.8" />
+            <text x="743" y="1215" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5"
+                fill="#BC8CFF">Output: Doris ADS + Redis TTL</text>
+        </g>
+
+        <!-- rejoin -->
+        <line x1="270" y1="1224" x2="270" y2="1254" stroke="#BC8CFF" stroke-width="1.5" />
+        <line x1="650" y1="1224" x2="650" y2="1254" stroke="#BC8CFF" stroke-width="1.5" />
+        <line x1="270" y1="1254" x2="630" y2="1254" stroke="#BC8CFF" stroke-width="1.5" />
+        <line x1="450" y1="1254" x2="450" y2="1284" stroke="#BC8CFF" stroke-width="1.5" marker-end="url(#arr-purple)" />
+        <text x="450" y="1250" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+            fill="#BC8CFF">REJOIN</text>
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 10 — Model Monitoring
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Airflow dag_model_monitor.py runs daily at 08:00. Evaluates champion model on last 7 days of actuals. Drift metrics (PSI, KL divergence, accuracy delta) pushed to Prometheus → Grafana ML dashboard.">
+            <rect x="200" y="1290" width="500" height="72" rx="6" fill="url(#g-rose)" stroke="#F85149"
+                stroke-width="1.5" />
+            <text x="450" y="1310" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#F85149"
+                letter-spacing="1">STEP 10</text>
+            <text x="450" y="1328" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Model Monitoring &amp; Drift Detection</text>
+            <text x="450" y="1346" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">dag_model_monitor.py · PSI · KL divergence · Prometheus · Grafana</text>
+        </g>
+        <line x1="450" y1="1362" x2="450" y2="1418" stroke="#F85149" stroke-width="1.5" marker-end="url(#arr-red)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       DECISION: Drift Detected?
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Has model accuracy or feature distribution drifted beyond the configured threshold? If YES → trigger automatic retraining (returns to Step 04). If NO → continue monitoring on next daily cycle.">
+            <polygon points="450,1424 640,1490 450,1556 260,1490" fill="#1A1E24" stroke="#F85149" stroke-width="1.8" />
+            <text x="450" y="1483" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600"
+                fill="#E6EDF3">Drift threshold</text>
+            <text x="450" y="1500" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600"
+                fill="#E6EDF3">breached?</text>
+        </g>
+
+        <!-- YES — drift: retrain loop -->
+        <path d="M260,1490 L80,1490 L80,534 L200,534" fill="none" stroke="#F85149" stroke-width="1.8"
+            stroke-dasharray="7,4" marker-end="url(#arr-red)" />
+        <text x="56" y="1012" font-family="IBM Plex Mono" font-size="10" fill="#F85149"
+            transform="rotate(-90,56,1012)">YES — Auto-retrain (Step 04)</text>
+
+        <!-- NO — continue -->
+        <line x1="450" y1="1556" x2="450" y2="1596" stroke="#3FB950" stroke-width="1.5" marker-end="url(#arr-green)" />
+        <text x="458" y="1578" font-family="IBM Plex Mono" font-size="10" fill="#3FB950">NO</text>
+
+
+        <!-- ═══════════════════════════════════════════════
+       DECISION: New version available?
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Is a new Production model version being promoted to replace the current one? If YES → retire the old version. If NO → loop back to monitoring Step 10 on the next daily cycle.">
+            <polygon points="450,1602 640,1668 450,1734 260,1668" fill="#1A1E24" stroke="#9E6CFE" stroke-width="1.8" />
+            <text x="450" y="1661" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600"
+                fill="#E6EDF3">New Production version</text>
+            <text x="450" y="1678" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600"
+                fill="#E6EDF3">being deployed?</text>
+        </g>
+
+        <!-- NO — loop back to monitoring -->
+        <path d="M640,1668 L790,1668 L790,1326 L700,1326" fill="none" stroke="#3FB950" stroke-width="1.5"
+            stroke-dasharray="6,3" marker-end="url(#arr-green)" />
+        <text x="810" y="1500" font-family="IBM Plex Mono" font-size="10" fill="#3FB950"
+            transform="rotate(90,810,1500)">NO — Keep monitoring</text>
+
+        <!-- YES → retire -->
+        <line x1="450" y1="1734" x2="450" y2="1774" stroke="#9E6CFE" stroke-width="1.5" marker-end="url(#arr-purple)" />
+        <text x="458" y="1756" font-family="IBM Plex Mono" font-size="10" fill="#9E6CFE">YES</text>
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 11 — Model Retirement
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Previous Production version demoted to Archived in MLflow Registry. All model artefacts retained indefinitely in MinIO model-artifacts/ as audit evidence. Full provenance chain logged to Elasticsearch audit-logs-* (1 year retention).">
+            <rect x="200" y="1780" width="500" height="90" rx="6" fill="url(#g-purple)" stroke="#9E6CFE"
+                stroke-width="1.5" />
+            <text x="450" y="1800" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#9E6CFE"
+                letter-spacing="1">STEP 11</text>
+            <text x="450" y="1818" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Model Retirement &amp; Archival</text>
+            <text x="450" y="1836" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">MLflow
+                Registry demotion · MinIO model-artifacts/ (permanent)</text>
+            <text x="450" y="1854" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#7D8590">Elasticsearch audit-logs-* · 1-year retention · full provenance chain</text>
+        </g>
+        <line x1="450" y1="1870" x2="450" y2="2020" stroke="#9E6CFE" stroke-width="1.5" marker-end="url(#arr-purple)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       STEP 12 — Audit Logging
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Every model version change, prediction run, and data access generates an audit entry. Captured via Apache Ranger on Doris + Elasticsearch audit-logs-* index. Regulatory requirement: 1-year immutable retention.">
+            <rect x="200" y="2026" width="500" height="72" rx="6" fill="url(#g-purple)" stroke="#9E6CFE"
+                stroke-width="1.5" />
+            <text x="450" y="2046" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#9E6CFE"
+                letter-spacing="1">STEP 12</text>
+            <text x="450" y="2064" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">Audit Logging &amp; Compliance</text>
+            <text x="450" y="2082" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Apache
+                Ranger · Elasticsearch audit-logs-* · 1-year immutable retention</text>
+        </g>
+        <line x1="450" y1="2098" x2="450" y2="2228" stroke="#9E6CFE" stroke-width="1.5" marker-end="url(#arr-purple)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       END
+  ═══════════════════════════════════════════════ -->
+        <g class="node"
+            data-tip="Lifecycle complete. The retired model is archived with full lineage. The new Production version is now active and monitored. The cycle continues with Step 10 (daily monitoring).">
+            <rect x="300" y="2234" width="300" height="48" rx="24" fill="url(#g-end)" stroke="#3FB950"
+                stroke-width="1.5" />
+            <text x="450" y="2254" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600"
+                fill="#E6EDF3">END OF RETIREMENT CYCLE</text>
+            <text x="450" y="2271" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">New
+                version active · Monitoring continues (Step 10)</text>
+        </g>
+
+
+        <!-- ═══════════════════════════════════════════════
+       OUTPUT STORES (right side)
+  ═══════════════════════════════════════════════ -->
+        <!-- Doris ADS -->
+        <g class="node"
+            data-tip="Apache Doris ADS layer receives all ML model outputs — churn scores, fraud flags, CLV, segments, ARPU forecast, network capacity, campaign effectiveness, pricing recommendations.">
+            <rect x="730" y="1150" width="150" height="80" rx="6" fill="#0D1F0D" stroke="#3FB950" stroke-width="1.2" />
+            <text x="805" y="1173" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#3FB950">STORE</text>
+            <text x="805" y="1190" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600"
+                fill="#E6EDF3">Doris ADS</text>
+            <text x="805" y="1206" text-anchor="middle" font-family="IBM Plex Mono" font-size="8"
+                fill="#7D8590">ads_churn_scores</text>
+            <text x="805" y="1220" text-anchor="middle" font-family="IBM Plex Mono" font-size="8"
+                fill="#7D8590">ads_fraud_flags</text>
+        </g>
+
+        <!-- Redis -->
+        <g class="node"
+            data-tip="Redis (Huawei DCS) caches the latest ML predictions for sub-millisecond lookup by Flink enrichment jobs and FastAPI. Keys: churn:{msisdn}:score, fraud:{msisdn}:flags. TTL-managed to prevent stale data.">
+            <rect x="730" y="1246" width="150" height="60" rx="6" fill="#1F1A00" stroke="#D29922" stroke-width="1.2" />
+            <text x="805" y="1266" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#D29922">CACHE</text>
+            <text x="805" y="1283" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600"
+                fill="#E6EDF3">Redis DCS</text>
+            <text x="805" y="1298" text-anchor="middle" font-family="IBM Plex Mono" font-size="8"
+                fill="#7D8590">TTL-keyed predictions</text>
+        </g>
+
+        <!-- MLflow -->
+        <g class="node"
+            data-tip="MLflow Model Registry stores all model versions with stage labels (Staging/Production/Archived). Artefacts backed by MinIO. Experiment tracking UI available on CCE.">
+            <rect x="20" y="868" width="160" height="80" rx="6" fill="#1F1200" stroke="#D29922" stroke-width="1.2" />
+            <text x="100" y="891" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#D29922">REGISTRY</text>
+            <text x="100" y="908" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600"
+                fill="#E6EDF3">MLflow</text>
+            <text x="100" y="924" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#7D8590">Model
+                Registry</text>
+            <text x="100" y="938" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#7D8590">MinIO
+                artefacts</text>
+        </g>
+        <line x1="200" y1="904" x2="180" y2="904" stroke="#D29922" stroke-width="1" stroke-dasharray="4,2"
+            marker-end="url(#arr-amber)" />
+
+        <!-- Agile BI -->
+        <g class="node"
+            data-tip="Agile BI dashboards consume Doris ADS outputs. Real-Time Fraud Monitor refreshes every 30s. Executive KPI report pulls churn cohorts and ARPU. Customer 360 shows CLV and segmentation.">
+            <rect x="730" y="1320" width="150" height="60" rx="6" fill="#0A1830" stroke="#4493F8" stroke-width="1.2" />
+            <text x="805" y="1340" text-anchor="middle" font-family="IBM Plex Mono" font-size="9"
+                fill="#4493F8">DASHBOARD</text>
+            <text x="805" y="1358" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600"
+                fill="#E6EDF3">Agile BI</text>
+            <text x="805" y="1373" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#7D8590">RT
+                Fraud · Customer 360</text>
+        </g>
+
+        <!-- connector lines to side stores -->
+        <line x1="640" y1="1190" x2="730" y2="1190" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2"
+            marker-end="url(#arr-purple)" />
+        <line x1="640" y1="1190" x2="690" y2="1190" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2" />
+        <line x1="690" y1="1190" x2="690" y2="1276" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2" />
+        <line x1="690" y1="1276" x2="730" y2="1276" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2"
+            marker-end="url(#arr-purple)" />
+        <line x1="690" y1="1276" x2="690" y2="1350" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2" />
+        <line x1="690" y1="1350" x2="730" y2="1350" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2"
+            marker-end="url(#arr-purple)" />
+
+
+        <!-- ═══════════════════════════════════════════════
+       LEGEND
+  ═══════════════════════════════════════════════ -->
+        <rect x="20" y="2460" width="860" height="140" rx="8" fill="#161B22" stroke="#21262D" stroke-width="1" />
+        <text x="450" y="2482" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#4493F8"
+            letter-spacing="2">LEGEND</text>
+
+        <!-- Process box -->
+        <rect x="40" y="2494" width="90" height="28" rx="4" fill="#1C3A6E" stroke="#4493F8" stroke-width="1.5" />
+        <text x="85" y="2513" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#E6EDF3">Process
+            Step</text>
+        <!-- Decision diamond -->
+        <polygon points="175,2508 215,2522 175,2536 135,2522" fill="#1A1E24" stroke="#D29922" stroke-width="1.5" />
+        <text x="175" y="2526" text-anchor="middle" font-family="IBM Plex Sans" font-size="9"
+            fill="#E6EDF3">Decision</text>
+        <!-- Terminal -->
+        <rect x="240" y="2494" width="90" height="28" rx="14" fill="#1C3A6E" stroke="#4493F8" stroke-width="1.5" />
+        <text x="285" y="2513" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#E6EDF3">Start /
+            End</text>
+        <!-- Store -->
+        <rect x="350" y="2494" width="90" height="28" rx="4" fill="#0D1F0D" stroke="#3FB950" stroke-width="1.2" />
+        <text x="395" y="2513" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#E6EDF3">Data
+            Store</text>
+
+        <!-- Arrow types -->
+        <line x1="460" y1="2508" x2="510" y2="2508" stroke="#4493F8" stroke-width="1.5" marker-end="url(#arr)" />
+        <text x="520" y="2512" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Main flow</text>
+
+        <line x1="620" y1="2508" x2="670" y2="2508" stroke="#F85149" stroke-width="1.5" stroke-dasharray="5,3"
+            marker-end="url(#arr-red)" />
+        <text x="680" y="2512" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Feedback / retrain loop</text>
+
+        <line x1="40" y1="2548" x2="90" y2="2548" stroke="#BC8CFF" stroke-width="1" stroke-dasharray="4,2"
+            marker-end="url(#arr-purple)" />
+        <text x="100" y="2552" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Output to store / system</text>
+
+        <!-- Phase colour key -->
+        <rect x="280" y="2538" width="10" height="10" rx="2" fill="#4493F8" />
+        <text x="296" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Data Access</text>
+        <rect x="380" y="2538" width="10" height="10" rx="2" fill="#39C5CF" />
+        <text x="396" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Experiment</text>
+        <rect x="470" y="2538" width="10" height="10" rx="2" fill="#3FB950" />
+        <text x="486" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Training</text>
+        <rect x="550" y="2538" width="10" height="10" rx="2" fill="#D29922" />
+        <text x="566" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Registry/Deploy</text>
+        <rect x="660" y="2538" width="10" height="10" rx="2" fill="#BC8CFF" />
+        <text x="676" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Serving</text>
+        <rect x="730" y="2538" width="10" height="10" rx="2" fill="#F85149" />
+        <text x="746" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Monitoring</text>
+        <rect x="820" y="2538" width="10" height="10" rx="2" fill="#9E6CFE" />
+        <text x="836" y="2549" font-family="IBM Plex Mono" font-size="9" fill="#7D8590">Retirement</text>
+
+        <text x="450" y="2588" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#4D5360">Telecom
+            Data Platform v3.0 · ML/AI Layer (L7) · Huawei Cloud · 12 Models · Apache Airflow · MLflow · Flink ·
+            February 2026</text>
+
+    </svg>
+
+    <script>
+        const tip = document.getElementById('tip');
+        document.querySelectorAll('.node').forEach(n => {
+            n.style.cursor = 'pointer';
+            n.addEventListener('mouseenter', e => {
+                tip.textContent = n.dataset.tip;
+                tip.style.display = 'block';
+            });
+            n.addEventListener('mousemove', e => {
+                tip.style.left = (e.clientX + 16) + 'px';
+                tip.style.top = (e.clientY + 16) + 'px';
+            });
+            n.addEventListener('mouseleave', () => {
+                tip.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+
+</html>

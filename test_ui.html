@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiteLLM Multi-Client Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-dim);
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            flex-grow: 1;
+        }
+
+        .settings-bar {
+            grid-column: span 2;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: white;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .client-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease;
+        }
+
+        .client-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-header h2 {
+            font-family: 'Outfit', sans-serif;
+            color: #818cf8;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .chat-area {
+            flex-grow: 1;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            scrollbar-width: thin;
+        }
+
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            max-width: 85%;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .message.user {
+            background: var(--primary);
+            align-self: flex-end;
+            color: white;
+        }
+
+        .message.ai {
+            background: rgba(51, 65, 85, 0.8);
+            align-self: flex-start;
+            color: var(--text-main);
+            border-left: 3px solid var(--primary);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            align-self: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        textarea {
+            flex-grow: 1;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            color: white;
+            resize: none;
+            height: 50px;
+            font-family: inherit;
+        }
+
+        button {
+            padding: 0 1.5rem;
+            border-radius: 0.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-dots::after {
+            content: '...';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+        }
+
+        .latency {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>LiteLLM Multi-Client Tester</h1>
+        <p>Parallel testing for multiple API clients and keys</p>
+    </header>
+
+    <div class="container">
+        <div class="settings-bar">
+            <div class="input-group">
+                <label>Target API URL</label>
+                <input type="text" id="api-url" value="http://localhost:7072/v1/chat/completions">
+            </div>
+            <div class="input-group">
+                <label>Model Name</label>
+                <input type="text" id="model-name" value="gemma-3-4b">
+            </div>
+            <div class="input-group" style="flex-grow: 2;">
+                <label>Global API Key (Master or Admin)</label>
+                <input type="password" id="global-key" value="sk-your-master-key" placeholder="Enter API Key">
+            </div>
+        </div>
+
+        <!-- Client A -->
+        <div class="client-card">
+            <div class="client-header">
+                <h2>Client A</h2>
+                <div class="status-badge">API Key: Active</div>
+            </div>
+            <div class="input-group">
+                <label>Individual Key (Optional Override)</label>
+                <input type="password" id="key-a" placeholder="Using Global Key...">
+            </div>
+            <div class="chat-area" id="chat-a">
+                <div class="message ai">Ready for testing Client A.</div>
+            </div>
+            <div class="control-group">
+                <textarea id="prompt-a" placeholder="Client A question..."></textarea>
+                <button id="send-a" onclick="sendMessage('a')">ASK</button>
+            </div>
+        </div>
+
+        <!-- Client B -->
+        <div class="client-card">
+            <div class="client-header">
+                <h2>Client B</h2>
+                <div class="status-badge">API Key: Active</div>
+            </div>
+            <div class="input-group">
+                <label>Individual Key (Optional Override)</label>
+                <input type="password" id="key-b" placeholder="Using Global Key...">
+            </div>
+            <div class="chat-area" id="chat-b">
+                <div class="message ai">Ready for testing Client B.</div>
+            </div>
+            <div class="control-group">
+                <textarea id="prompt-b" placeholder="Client B question..."></textarea>
+                <button id="send-b" onclick="sendMessage('b')">ASK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage(clientId) {
+            const promptInput = document.getElementById(`prompt-${clientId}`);
+            const chatArea = document.getElementById(`chat-${clientId}`);
+            const sendBtn = document.getElementById(`send-${clientId}`);
+            
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            // UI Updates
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = prompt;
+            chatArea.appendChild(userMsg);
+            
+            const aiMsg = document.createElement('div');
+            aiMsg.className = 'message ai loading-dots';
+            aiMsg.textContent = 'Thinking';
+            chatArea.appendChild(aiMsg);
+            
+            promptInput.value = '';
+            chatArea.scrollTop = chatArea.scrollHeight;
+            sendBtn.disabled = true;
+
+            // Prepare Request
+            const apiUrl = document.getElementById('api-url').value;
+            const model = document.getElementById('model-name').value;
+            const globalKey = document.getElementById('global-key').value;
+            const localKey = document.getElementById(`key-${clientId}`).value;
+            
+            const apiKey = localKey || globalKey;
+            
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                const data = await response.json();
+                const endTime = performance.now();
+                const latency = Math.round(endTime - startTime);
+
+                aiMsg.classList.remove('loading-dots');
+                
+                if (response.ok) {
+                    aiMsg.textContent = data.choices[0].message.content;
+                    const latencyDiv = document.createElement('div');
+                    latencyDiv.className = 'latency';
+                    latencyDiv.textContent = `Latency: ${latency}ms`;
+                    aiMsg.appendChild(latencyDiv);
+                } else {
+                    aiMsg.className = 'message error';
+                    aiMsg.textContent = `Error: ${data.error?.message || response.statusText}`;
+                }
+
+            } catch (err) {
+                aiMsg.className = 'message error';
+                aiMsg.textContent = `Network Error: ${err.message}`;
+            } finally {
+                sendBtn.disabled = false;
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+        }
+
+        // Add Enter support for textareas
+        document.querySelectorAll('textarea').forEach(el => {
+            el.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const id = el.id.split('-')[1];
+                    sendMessage(id);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

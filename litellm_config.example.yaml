@@ -1,0 +1,17 @@
+model_list:
+  - model_name: gemma2-9b
+    litellm_params:
+      model: ollama/gemma2:9b
+      api_base: http://vllm-ollama-1:11434
+
+general_settings:
+  master_key: sk-PLACEHOLDER
+  proxy_ui: true
+  database_connection_pool_limit: 10
+  allow_user_auth: true
+  ui_access_mode: "all"
+  store_model_in_db: true
+  allow_team_members_to_create_keys: true
+
+litellm_settings:
+  drop_params: false

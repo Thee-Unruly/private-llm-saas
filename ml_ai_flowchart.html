@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>ML/AI Lifecycle Flowchart</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+    :root {
+      --bg: #03050a;
+      --surface: rgba(255, 255, 255, 0.03);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --glass: rgba(17, 24, 39, 0.7);
+
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --dim: #475569;
+
+      --blue: #3b82f6;
+      --cyan: #06b6d4;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --red: #ef4444;
+      --violet: #7c3aed;
+
+      --accent: var(--blue);
+
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-body: 'Inter', sans-serif;
+      --font-heading: 'Instrument Serif', serif;
+
+      --node-w: 600px;
+      --radius: 16px;
+      --shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+      font-family: var(--font-body);
+      color: var(--text);
+      padding: 0 0 200px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: -100px;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* ═══════════════════════════════════════════
+   LAYOUT SPINE
+═══════════════════════════════════════════ */
+    .chart {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding-top: 48px;
+    }
+
+    /* ═══════════════════════════════════════════
+   PAGE TITLE
+═══════════════════════════════════════════ */
+    .page-title {
+      text-align: center;
+      margin-bottom: 80px;
+      padding: 0 24px;
+      max-width: 800px;
+    }
+
+    .page-title .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 100px;
+      border: 1px solid var(--surface-border);
+    }
+
+    .page-title h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(40px, 8vw, 64px);
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    .page-title h1 span {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    .page-title p {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto;
+      font-family: var(--font-body);
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════
+   PHASE LABEL  (sits above its group of nodes)
+═══════════════════════════════════════════ */
+    .phase-label {
+      width: var(--node-w);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      margin-top: 40px;
+    }
+
+    .phase-pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .16em;
+      padding: 6px 14px;
+      border-radius: 100px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .phase-name {
+      font-family: var(--font-heading);
+      font-size: 24px;
+      color: var(--text);
+      white-space: nowrap;
+      font-style: italic;
+    }
+
+    .phase-rule {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--surface-border), transparent);
+    }
+
+    /* ═══════════════════════════════════════════
+   CONNECTORS  (arrows between nodes)
+═══════════════════════════════════════════ */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      margin: 0;
+      position: relative;
+    }
+
+    .a-line {
+      width: 1px;
+      height: 48px;
+      background: var(--surface-border);
+      position: relative;
+    }
+
+    .a-line::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--surface-border);
+    }
+
+    .a-head {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid var(--surface-border);
+    }
+
+    /* color variants */
+    .arrow.c-blue .a-line,
+    .arrow.c-blue .a-head {
+      background-color: var(--blue);
+      border-top-color: var(--blue);
+    }
+
+    .arrow.c-blue .a-line::after {
+      background: var(--blue);
+    }
+
+    .arrow.c-cyan .a-line,
+    .arrow.c-cyan .a-head {
+      background-color: var(--cyan);
+      border-top-color: var(--cyan);
+    }
+
+    .arrow.c-cyan .a-line::after {
+      background: var(--cyan);
+    }
+
+    .arrow.c-green .a-line,
+    .arrow.c-green .a-head {
+      background-color: var(--green);
+      border-top-color: var(--green);
+    }
+
+    .arrow.c-green .a-line::after {
+      background: var(--green);
+    }
+
+    .arrow.c-amber .a-line,
+    .arrow.c-amber .a-head {
+      background-color: var(--amber);
+      border-top-color: var(--amber);
+    }
+
+    .arrow.c-amber .a-line::after {
+      background: var(--amber);
+    }
+
+    .arrow.c-purple .a-line,
+    .arrow.c-purple .a-head {
+      background-color: var(--purple);
+      border-top-color: var(--purple);
+    }
+
+    .arrow.c-purple .a-line::after {
+      background: var(--purple);
+    }
+
+    .arrow.c-red .a-line,
+    .arrow.c-red .a-head {
+      background-color: var(--red);
+      border-top-color: var(--red);
+    }
+
+    .arrow.c-red .a-line::after {
+      background: var(--red);
+    }
+
+    .arrow.c-violet .a-line,
+    .arrow.c-violet .a-head {
+      background-color: var(--violet);
+      border-top-color: var(--violet);
+    }
+
+    .arrow.c-violet .a-line::after {
+      background: var(--violet);
+    }
+
+    .arrow .a-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin: 4px 0;
+      border: 1px solid var(--surface-border);
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      color: var(--muted);
+    }
+
+    /* ═══════════════════════════════════════════
+   TERMINAL  (pill — start / end)
+═══════════════════════════════════════════ */
+    .terminal {
+      width: var(--node-w);
+      border-radius: 100px;
+      padding: 24px 40px;
+      text-align: center;
+      border: 1px solid var(--surface-border);
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .terminal.start {
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .terminal.end {
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .t-title {
+      font-family: var(--font-heading);
+      font-size: 28px;
+      color: var(--text);
+      font-style: italic;
+    }
+
+    .t-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ═══════════════════════════════════════════
+   PROCESS NODE
+═══════════════════════════════════════════ */
+    .node {
+      width: var(--node-w);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--s1);
+      padding: 18px 22px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* left accent bar */
+    .node::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 10px 0 0 10px;
+    }
+
+    .node.c-blue {
+      border-color: rgba(77, 158, 246, .4);
+      background: rgba(77, 158, 246, .07);
+    }
+
+    .node.c-blue::before {
+      background: var(--blue);
+    }
+
+    .node.c-cyan {
+      border-color: rgba(34, 211, 238, .4);
+      background: rgba(34, 211, 238, .07);
+    }
+
+    .node.c-cyan::before {
+      background: var(--cyan);
+    }
+
+    .node.c-green {
+      border-color: rgba(52, 211, 153, .4);
+      background: rgba(52, 211, 153, .07);
+    }
+
+    .node.c-green::before {
+      background: var(--green);
+    }
+
+    .node.c-amber {
+      border-color: rgba(251, 191, 36, .4);
+      background: rgba(251, 191, 36, .07);
+    }
+
+    .node.c-amber::before {
+      background: var(--amber);
+    }
+
+    .node.c-purple {
+      border-color: rgba(192, 132, 252, .4);
+      background: rgba(192, 132, 252, .07);
+    }
+
+    .node.c-purple::before {
+      background: var(--purple);
+    }
+
+    .node.c-red {
+      border-color: rgba(251, 113, 133, .4);
+      background: rgba(251, 113, 133, .07);
+    }
+
+    .node.c-red::before {
+      background: var(--red);
+    }
+
+    .node.c-violet {
+      border-color: rgba(167, 139, 250, .4);
+      background: rgba(167, 139, 250, .07);
+    }
+
+    .node.c-violet::before {
+      background: var(--violet);
+    }
+
+    .n-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .n-step {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .18em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .n-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .n-sub {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-top: 6px;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 3px 9px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      border: 1px solid;
+      letter-spacing: .05em;
+    }
+
+    .badge.c-blue {
+      color: #93c5fd;
+      border-color: rgba(77, 158, 246, .45);
+      background: rgba(77, 158, 246, .12);
+    }
+
+    .badge.c-cyan {
+      color: #67e8f9;
+      border-color: rgba(34, 211, 238, .45);
+      background: rgba(34, 211, 238, .12);
+    }
+
+    .badge.c-green {
+      color: #6ee7b7;
+      border-color: rgba(52, 211, 153, .45);
+      background: rgba(52, 211, 153, .12);
+    }
+
+    .badge.c-amber {
+      color: #fde68a;
+      border-color: rgba(251, 191, 36, .45);
+      background: rgba(251, 191, 36, .12);
+    }
+
+    .badge.c-purple {
+      color: #e9d5ff;
+      border-color: rgba(192, 132, 252, .45);
+      background: rgba(192, 132, 252, .12);
+    }
+
+    .badge.c-red {
+      color: #fecdd3;
+      border-color: rgba(251, 113, 133, .45);
+      background: rgba(251, 113, 133, .12);
+    }
+
+    .badge.c-violet {
+      color: #ddd6fe;
+      border-color: rgba(167, 139, 250, .45);
+      background: rgba(167, 139, 250, .12);
+    }
+
+    /* ── chips ── */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .chip.out {
+      background: rgba(52, 211, 153, .08);
+      border-color: rgba(52, 211, 153, .3);
+      color: #6ee7b7;
+    }
+
+    /* ── sub-grid inside node ── */
+    .sg {
+      display: grid;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .sg.c2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .sg.c3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .sg.c4 {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    .sc {
+      background: rgba(0, 0, 0, .3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+    }
+
+    .sc-lbl {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .1em;
+      margin-bottom: 4px;
+    }
+
+    .sc-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .sc-body {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════════════
+   DIAMOND  (decision node)
+═══════════════════════════════════════════ */
+    .diamond-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: var(--node-w);
+    }
+
+    .diamond {
+      position: relative;
+      width: 280px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .diamond::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      transform: rotate(45deg);
+      border-radius: 5px;
+      border: 2px solid var(--amber);
+      background: rgba(251, 191, 36, .09);
+    }
+
+    .diamond.c-red::before {
+      border-color: var(--red);
+      background: rgba(251, 113, 133, .09);
+    }
+
+    .diamond.c-violet::before {
+      border-color: var(--violet);
+      background: rgba(167, 139, 250, .09);
+    }
+
+    .d-text {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 0 14px;
+    }
+
+    .d-q {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .d-sub {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ═══════════════════════════════════════════
+   DECISION BRANCHES  (clean Yes/No below diamond)
+═══════════════════════════════════════════ */
+    .branches {
+      width: var(--node-w);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 0;
+    }
+
+    .br {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .br:first-child {
+      border-right: 1px solid var(--border);
+    }
+
+    .br-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      align-self: flex-start;
+      border: 1px solid;
+    }
+
+    .br-tag.yes {
+      color: var(--green);
+      border-color: rgba(52, 211, 153, .4);
+      background: rgba(52, 211, 153, .1);
+    }
+
+    .br-tag.no {
+      color: var(--red);
+      border-color: rgba(251, 113, 133, .4);
+      background: rgba(251, 113, 133, .1);
+    }
+
+    .br-tag.no2 {
+      color: var(--green);
+      border-color: rgba(52, 211, 153, .4);
+      background: rgba(52, 211, 153, .1);
+    }
+
+    .br-tag.yes2 {
+      color: var(--violet);
+      border-color: rgba(167, 139, 250, .4);
+      background: rgba(167, 139, 250, .1);
+    }
+
+    .br-desc {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ═══════════════════════════════════════════
+   LOOP NOTE  (feedback arrows — inline, readable)
+═══════════════════════════════════════════ */
+    .loop {
+      width: var(--node-w);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 7px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      line-height: 1.6;
+      border: 1px dashed;
+    }
+
+    .loop.red {
+      border-color: rgba(251, 113, 133, .4);
+      background: rgba(251, 113, 133, .07);
+      color: #fecdd3;
+    }
+
+    .loop.green {
+      border-color: rgba(52, 211, 153, .4);
+      background: rgba(52, 211, 153, .07);
+      color: #6ee7b7;
+    }
+
+    .loop-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ═══════════════════════════════════════════
+   FORK  (parallel paths)
+═══════════════════════════════════════════ */
+    .fork-head {
+      width: var(--node-w);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 2px 0 10px;
+    }
+
+    .fork-line-l {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(to left, var(--purple), transparent);
+    }
+
+    .fork-line-r {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(to right, var(--purple), transparent);
+    }
+
+    .fork-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      color: var(--purple);
+      padding: 2px 10px;
+      border: 1px solid rgba(192, 132, 252, .4);
+      border-radius: 3px;
+      background: rgba(192, 132, 252, .08);
+      white-space: nowrap;
+    }
+
+    .fork-cols {
+      width: var(--node-w);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .fork-cols .node {
+      width: 100%;
+    }
+
+    .rejoin-lbl {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin: 6px 0;
+    }
+
+    /* ═══════════════════════════════════════════
+   STORES ROW  (outputs — below fork)
+═══════════════════════════════════════════ */
+    .stores-row {
+      width: var(--node-w);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .store {
+      border-radius: 7px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      background: var(--s1);
+    }
+
+    .store-lbl {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .1em;
+      margin-bottom: 4px;
+    }
+
+    .store-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .store-body {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+
+    .store.g {
+      border-color: rgba(52, 211, 153, .35);
+      background: rgba(52, 211, 153, .07);
+    }
+
+    .store.a {
+      border-color: rgba(251, 191, 36, .35);
+      background: rgba(251, 191, 36, .07);
+    }
+
+    .store.b {
+      border-color: rgba(77, 158, 246, .35);
+      background: rgba(77, 158, 246, .07);
+    }
+
+    .store.g .store-lbl {
+      color: var(--green);
+    }
+
+    .store.a .store-lbl {
+      color: var(--amber);
+    }
+
+    .store.b .store-lbl {
+      color: var(--blue);
+    }
+
+    /* ═══════════════════════════════════════════
+   STRATEGY GRID  (hyperparameter tuning)
+═══════════════════════════════════════════ */
+    .strat {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .st {
+      border-radius: 5px;
+      padding: 8px 5px;
+      text-align: center;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .st.hi {
+      border-color: var(--cyan);
+      background: rgba(34, 211, 238, .1);
+    }
+
+    .st-t {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .st.hi .st-t {
+      color: var(--cyan);
+    }
+
+    .st-s {
+      font-family: var(--mono);
+      font-size: 7.5px;
+      color: var(--dim);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    /* ═══════════════════════════════════════════
+   MODEL GRID
+═══════════════════════════════════════════ */
+    .model-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .mc {
+      border-radius: 5px;
+      padding: 7px 10px;
+      border: 1px solid rgba(52, 211, 153, .25);
+      background: rgba(52, 211, 153, .05);
+    }
+
+    .mc-t {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      color: var(--green);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .mc-s {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--dim);
+    }
+
+    /* ═══════════════════════════════════════════
+   STAGE TRACK
+═══════════════════════════════════════════ */
+    .stage {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 10px 0 6px;
+      flex-wrap: wrap;
+    }
+
+    .sn {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 4px 11px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--s2);
+      color: var(--dim);
+      white-space: nowrap;
+    }
+
+    .sn.on {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(52, 211, 153, .1);
+      font-weight: 600;
+    }
+
+    .sa {
+      width: 20px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .sa::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      border-left: 6px solid var(--border);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    /* ═══════════════════════════════════════════
+   LEGEND
+═══════════════════════════════════════════ */
+    .legend {
+      width: var(--node-w);
+      margin-top: 64px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--s1);
+      padding: 20px 24px;
+    }
+
+    .legend-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .2em;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-bottom: 12px;
+    }
+
+    .li {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .li-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .li-box {
+      width: 28px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1.5px solid var(--blue);
+      background: rgba(77, 158, 246, .1);
+      flex-shrink: 0;
+    }
+
+    .li-dia {
+      width: 14px;
+      height: 14px;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      border: 1.5px solid var(--amber);
+      background: rgba(251, 191, 36, .1);
+      flex-shrink: 0;
+    }
+
+    .li-pill {
+      width: 24px;
+      height: 14px;
+      border-radius: 10px;
+      border: 1.5px solid var(--green);
+      background: rgba(52, 211, 153, .1);
+      flex-shrink: 0;
+    }
+
+    .li-line-solid {
+      width: 28px;
+      height: 2px;
+      background: var(--blue);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .li-line-solid::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      border-left: 7px solid var(--blue);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .li-line-dash {
+      width: 28px;
+      height: 2px;
+      background: repeating-linear-gradient(to right, var(--red) 0, var(--red) 4px, transparent 4px, transparent 8px);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .li-line-dash::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      border-left: 7px solid var(--red);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .legend-foot {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--dim);
+      text-align: center;
+      margin-top: 14px;
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chart">
+
+    <!-- ══ TITLE ══ -->
+    <div class="page-title">
+      <div class="eyebrow">L7 · AI / ML Layer · Telecom Data Platform · Huawei Cloud · v3.0</div>
+      <h1>ML / AI Lifecycle <span>End-to-End Flowchart</span></h1>
+      <p>12 Models · Apache Airflow · MLflow · Apache Flink · Feb 2026</p>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       START TERMINAL
+  ══════════════════════════════════════ -->
+    <div class="terminal start">
+      <div class="t-title">START</div>
+      <div class="t-sub">New model build &nbsp;·&nbsp; Weekly retrain (Airflow) &nbsp;·&nbsp; Drift-triggered retrain
+      </div>
+    </div>
+
+    <div class="arrow c-blue">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 01 — DATA ACCESS
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 01</div>
+      <div class="phase-name" style="color:var(--blue)">Data Access</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="node c-blue">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 01</div>
+          <div class="n-title">Feature Access</div>
+        </div>
+        <div class="badge c-blue">DATA ACCESS</div>
+      </div>
+      <div class="n-sub">PyIceberg reads versioned feature tables from MinIO at <code
+          style="color:#93c5fd">ml-features/{dataset}/{version}/</code>. Time-travel queries ensure point-in-time
+        correct joins — no future data leakage. Redis DCS provides live subscriber profiles (&lt;1ms).</div>
+      <div class="sg c3">
+        <div class="sc">
+          <div class="sc-lbl" style="color:var(--blue)">STORE</div>
+          <div class="sc-name">MinIO Iceberg</div>
+          <div class="sc-body">ml-features/<br>Time-travel<br>ACID transactions</div>
+        </div>
+        <div class="sc">
+          <div class="sc-lbl" style="color:var(--cyan)">LIBRARY</div>
+          <div class="sc-name">PyIceberg</div>
+          <div class="sc-body">Point-in-time joins<br>Schema evolution<br>Partition pruning</div>
+        </div>
+        <div class="sc">
+          <div class="sc-lbl" style="color:var(--amber)">CACHE</div>
+          <div class="sc-name">Redis DCS</div>
+          <div class="sc-body">Subscriber profiles<br>Plan / segment data<br>&lt;1ms lookup</div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip">PyIceberg</span>
+        <span class="chip">MinIO ml-features/</span>
+        <span class="chip">Redis subscriber cache</span>
+        <span class="chip">100+ features per subscriber</span>
+        <span class="chip out">→ Training DataFrame ready</span>
+      </div>
+    </div>
+
+    <div class="arrow c-blue">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 02 — EXPERIMENTATION
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 02</div>
+      <div class="phase-name" style="color:var(--cyan)">Experimentation & Tuning</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="node c-cyan">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 02</div>
+          <div class="n-title">Experiment Design</div>
+        </div>
+        <div class="badge c-cyan">EXPERIMENT</div>
+      </div>
+      <div class="n-sub">ML Engineer defines model architecture, feature sets, and evaluation metrics in JupyterHub
+        (CCE-hosted, versioned in GitHub <code style="color:#67e8f9">notebooks/</code>). Every run auto-logged to MLflow
+        Tracking: params, metrics, dataset hash, environment.</div>
+      <div class="chips">
+        <span class="chip">JupyterHub on CCE</span>
+        <span class="chip">MLflow Tracking UI</span>
+        <span class="chip">GitHub notebooks/ versioning</span>
+        <span class="chip out">→ MLflow experiment run created</span>
+      </div>
+    </div>
+
+    <div class="arrow c-cyan">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <div class="node c-cyan">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 03</div>
+          <div class="n-title">Hyperparameter Tuning</div>
+        </div>
+        <div class="badge c-cyan">TUNING</div>
+      </div>
+      <div class="n-sub">Five-strategy pipeline. Optuna TPE is the production default for all 12 models. All trial
+        results auto-logged via OptunaCallback. CV strategy is model-type-specific to prevent temporal leakage.</div>
+      <div class="strat">
+        <div class="st">
+          <div class="st-t">Grid Search</div>
+          <div class="st-s">GridSearchCV<br>Small spaces</div>
+        </div>
+        <div class="st">
+          <div class="st-t">Random Search</div>
+          <div class="st-s">RandomizedCV<br>Medium spaces</div>
+        </div>
+        <div class="st hi">
+          <div class="st-t">✦ Optuna TPE</div>
+          <div class="st-s">Bayesian default<br>All 12 models</div>
+        </div>
+        <div class="st">
+          <div class="st-t">Early Stop</div>
+          <div class="st-s">MedianPruner<br>XGB/LGB native</div>
+        </div>
+        <div class="st">
+          <div class="st-t">Cross-Val</div>
+          <div class="st-s">StratifiedKFold<br>TimeSeriesSplit</div>
+        </div>
+      </div>
+      <div class="chips" style="margin-top:10px">
+        <span class="chip">Optuna + OptunaCallback → MLflow autolog</span>
+        <span class="chip">Classification → StratifiedKFold (5-fold)</span>
+        <span class="chip">Time-series → TimeSeriesSplit (5-fold)</span>
+        <span class="chip out">→ Best params + all trial results in MLflow</span>
+      </div>
+    </div>
+
+    <div class="arrow c-green">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 03 — TRAINING & EVALUATION
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 03</div>
+      <div class="phase-name" style="color:var(--green)">Training & Evaluation</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="node c-green">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 04</div>
+          <div class="n-title">Model Training</div>
+        </div>
+        <div class="badge c-green">TRAINING</div>
+      </div>
+      <div class="n-sub">Jobs submitted via Airflow <code style="color:#6ee7b7">KubernetesPodOperator</code>
+        (src/ml/models/). Each job runs in an isolated K8s pod. Scheduled weekly via <code
+          style="color:#6ee7b7">dag_weekly_model_retrain.py</code>. Also triggered by drift detection.</div>
+      <div class="model-grid">
+        <div class="mc">
+          <div class="mc-t">Churn Prediction</div>
+          <div class="mc-s">XGBoost / LightGBM · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">SIM Fraud Detection</div>
+          <div class="mc-s">Isolation Forest + LightGBM · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">ZAAD Mobile Money Fraud</div>
+          <div class="mc-s">Isolation Forest + LightGBM · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Revenue / Leakage Fraud</div>
+          <div class="mc-s">LightGBM + Rules · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">ARPU Forecasting</div>
+          <div class="mc-s">XGBoost + Prophet · Monthly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Customer Lifetime Value</div>
+          <div class="mc-s">XGBoost Regressor · Monthly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Usage Pattern Analysis</div>
+          <div class="mc-s">DBSCAN + Prophet · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Customer Segmentation</div>
+          <div class="mc-s">KMeans / DBSCAN · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Network Congestion</div>
+          <div class="mc-s">Prophet / LSTM · Daily</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Campaign Effectiveness</div>
+          <div class="mc-s">LightGBM · Post-campaign</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Offer Recommendation</div>
+          <div class="mc-s">ALS (implicit) · Weekly</div>
+        </div>
+        <div class="mc">
+          <div class="mc-t">Pricing Optimisation</div>
+          <div class="mc-s">XGBoost + Monte Carlo · Monthly</div>
+        </div>
+      </div>
+      <div class="chips"><span class="chip">Airflow KubernetesPodOperator</span><span class="chip">Isolated K8s pod per
+          job</span><span class="chip out">→ Serialised model + metrics in MLflow</span></div>
+    </div>
+
+    <div class="arrow c-green">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <div class="node c-green">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 05</div>
+          <div class="n-title">Evaluation & Explainability (SHAP)</div>
+        </div>
+        <div class="badge c-green">EVALUATE</div>
+      </div>
+      <div class="n-sub">Compare all runs in MLflow UI on AUC, F1, Precision, Recall, RMSE. SHAP computes feature
+        importance for all tree-based models — stored as MLflow artefacts for regulatory and audit use. Champion model
+        selected here.</div>
+      <div class="sg c4">
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--green)">CLASSIF.</div>
+          <div class="sc-name">AUC-ROC</div>
+          <div class="sc-body">F1 · Precision<br>Recall</div>
+        </div>
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--green)">REGRESS.</div>
+          <div class="sc-name">RMSE</div>
+          <div class="sc-body">MAE<br>R²</div>
+        </div>
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--green)">EXPLAIN.</div>
+          <div class="sc-name">SHAP</div>
+          <div class="sc-body">Feature importance<br>Audit artefacts</div>
+        </div>
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--green)">COMPARE</div>
+          <div class="sc-name">MLflow UI</div>
+          <div class="sc-body">All runs<br>Champion pick</div>
+        </div>
+      </div>
+      <div class="chips"><span class="chip">MLflow UI run comparison</span><span class="chip">SHAP → MLflow
+          artefacts</span><span class="chip out">→ Champion model identified</span></div>
+    </div>
+
+    <div class="arrow c-amber">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       DECISION 1
+  ══════════════════════════════════════ -->
+    <div class="diamond-wrap">
+      <div class="diamond">
+        <div class="d-text">
+          <div class="d-q">New model better than<br>current Production?</div>
+          <div class="d-sub">Compared on held-out validation set</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="branches">
+      <div class="br">
+        <div class="br-tag yes">YES</div>
+        <div class="br-desc">Proceed to Phase 04<br>→ Step 06 (Registration)</div>
+      </div>
+      <div class="br">
+        <div class="br-tag no">NO</div>
+        <div class="br-desc">Return to Step 03<br>Retune with updated Optuna study</div>
+      </div>
+    </div>
+
+    <div class="loop red" style="margin-top:8px">
+      <div class="loop-icon">↩</div>
+      <div><strong style="color:var(--red)">NO path:</strong> Returns to Step 03 (Hyperparameter Tuning). Optuna resumes
+        its study with updated trial history — avoids already-tested poor regions of parameter space.</div>
+    </div>
+
+    <div class="arrow c-amber">
+      <div class="a-line"></div>
+      <span class="a-label">YES → Phase 04</span>
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 04 — REGISTRY & DEPLOYMENT
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 04</div>
+      <div class="phase-name" style="color:var(--amber)">Registry & Deployment</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="node c-amber">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 06</div>
+          <div class="n-title">Model Registration</div>
+        </div>
+        <div class="badge c-amber">REGISTER</div>
+      </div>
+      <div class="n-sub">Champion model registered to MLflow Model Registry via REST API or UI. Semantic versioning
+        applied. Artefacts stored permanently in MinIO <code style="color:#fde68a">model-artifacts/</code> as audit
+        evidence.</div>
+      <div class="stage">
+        <div class="sn">None</div>
+        <div class="sa"></div>
+        <div class="sn">Staging</div>
+        <div class="sa"></div>
+        <div class="sn on">✦ Production</div>
+        <div class="sa"></div>
+        <div class="sn">Archived</div>
+      </div>
+      <div class="chips">
+        <span class="chip">MLflow REST API / UI</span>
+        <span class="chip">Semantic versioning: major.minor.patch</span>
+        <span class="chip">MinIO model-artifacts/ — permanent retention</span>
+        <span class="chip out">→ Model in Staging, ready for promotion</span>
+      </div>
+    </div>
+
+    <div class="arrow c-amber">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <div class="node c-amber">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 07</div>
+          <div class="n-title">Stage Promotion & Deployment</div>
+        </div>
+        <div class="badge c-amber">DEPLOY</div>
+      </div>
+      <div class="n-sub">Promoting to "Production" in MLflow is the <strong style="color:var(--text)">only deployment
+          action required</strong>. Both Flink streaming jobs and Airflow DAGs use <code
+          style="color:#fde68a">model_loader.py</code> to auto-discover the latest Production version at startup.
+        Zero-downtime hot-swap.</div>
+      <div class="sg c2">
+        <div class="sc">
+          <div class="sc-lbl" style="color:var(--amber)">REAL-TIME CONSUMERS</div>
+          <div class="sc-name">Flink Jobs</div>
+          <div class="sc-body">fraud_detector.py<br>churn_scorer.py<br>revenue_leakage.py<br>→ auto-pick via
+            model_loader.py</div>
+        </div>
+        <div class="sc">
+          <div class="sc-lbl" style="color:var(--amber)">BATCH CONSUMERS</div>
+          <div class="sc-name">Airflow DAGs</div>
+          <div class="sc-body">dag_churn_batch_score.py<br>dag_weekly_model_retrain.py<br>dag_model_monitor.py<br>→
+            auto-pick via model_loader.py</div>
+        </div>
+      </div>
+      <div class="chips"><span class="chip">model_loader.py auto-discovery</span><span class="chip">Zero-downtime Flink
+          hot-swap</span><span class="chip out">→ Production model live across all consumers</span></div>
+    </div>
+
+    <div class="arrow c-purple">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 05 — SERVING
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 05</div>
+      <div class="phase-name" style="color:var(--purple)">Serving</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="fork-head">
+      <div class="fork-line-l"></div>
+      <div class="fork-lbl">PARALLEL SERVING PATHS</div>
+      <div class="fork-line-r"></div>
+    </div>
+
+    <div class="fork-cols">
+      <div class="node c-purple">
+        <div class="n-row">
+          <div>
+            <div class="n-step">STEP 08 · REAL-TIME</div>
+            <div class="n-title">Flink Streaming Serving</div>
+          </div>
+          <div class="badge c-purple">&lt; 5 SEC</div>
+        </div>
+        <div class="n-sub">Flink jobs embed Production model via model_loader.py. Predictions written to Doris ADS +
+          Redis TTL keys. FastAPI exposes scores via REST.</div>
+        <div class="chips">
+          <span class="chip">fraud_detector.py · LightGBM</span>
+          <span class="chip">churn_scorer.py · XGBoost</span>
+          <span class="chip">FastAPI /api/subscriber/{msisdn}/</span>
+          <span class="chip out">→ Doris ADS + Redis</span>
+        </div>
+      </div>
+      <div class="node c-purple">
+        <div class="n-row">
+          <div>
+            <div class="n-step">STEP 09 · BATCH</div>
+            <div class="n-title">Nightly Batch Scoring</div>
+          </div>
+          <div class="badge c-purple">DAILY 06:00</div>
+        </div>
+        <div class="n-sub">Airflow dag_churn_batch_score.py scores all 1.5M subscribers nightly. Results pushed to Doris
+          ADS and Redis.</div>
+        <div class="chips">
+          <span class="chip">1.5M subscribers scored</span>
+          <span class="chip">ads_churn_scores · ads_clv_scores</span>
+          <span class="chip">ads_segments · ads_offers</span>
+          <span class="chip out">→ Doris ADS + Redis TTL</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow c-purple">
+      <div class="a-line"></div>
+      <span class="a-label">REJOIN</span>
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- Outputs consumed by -->
+    <div class="stores-row">
+      <div class="store g">
+        <div class="store-lbl">STORE</div>
+        <div class="store-name">Doris ADS</div>
+        <div class="store-body">ads_churn_scores<br>ads_fraud_flags<br>ads_clv_scores<br>ads_customer_segments</div>
+      </div>
+      <div class="store a">
+        <div class="store-lbl">CACHE + API</div>
+        <div class="store-name">Redis + FastAPI</div>
+        <div class="store-body">TTL-keyed
+          predictions<br>/api/campaigns/eligibility<br>/api/subscriber/{msisdn}/<br>/api/arpu/{segment}</div>
+      </div>
+      <div class="store b">
+        <div class="store-lbl">DASHBOARD</div>
+        <div class="store-name">Agile BI</div>
+        <div class="store-body">Real-Time Fraud Monitor<br>Customer 360 Analytics<br>Executive KPI Report<br>Network NOC
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow c-red">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 06 — MONITORING
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 06</div>
+      <div class="phase-name" style="color:var(--red)">Monitoring & Drift Detection</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="node c-red">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 10</div>
+          <div class="n-title">Model Monitoring & Drift Detection</div>
+        </div>
+        <div class="badge c-red">DAILY 08:00</div>
+      </div>
+      <div class="n-sub">Airflow dag_model_monitor.py evaluates the champion model on the last 7 days of actuals. Four
+        drift metrics computed and pushed to Prometheus → Grafana "ML Model Performance" dashboard. Auto-retrain
+        triggered if any metric exceeds threshold.</div>
+      <div class="sg c4">
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--red)">METRIC 1</div>
+          <div class="sc-name">PSI</div>
+          <div class="sc-body">Population<br>Stability Index<br>Feature drift</div>
+        </div>
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--red)">METRIC 2</div>
+          <div class="sc-name">KL Div</div>
+          <div class="sc-body">KL Divergence<br>Distribution<br>shift</div>
+        </div>
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--red)">METRIC 3</div>
+          <div class="sc-name">Δ Acc</div>
+          <div class="sc-body">Accuracy delta<br>vs baseline</div>
+        </div>
+        <div class="sc" style="text-align:center">
+          <div class="sc-lbl" style="color:var(--red)">METRIC 4</div>
+          <div class="sc-name">P-Lag</div>
+          <div class="sc-body">Prediction lag<br>staleness</div>
+        </div>
+      </div>
+      <div class="chips"><span class="chip">Prometheus pushgateway</span><span class="chip">Grafana ML Model
+          Performance</span><span class="chip">MLflow: drift score per eval run</span><span class="chip out">→ Alert in
+          Grafana · auto-retrain if breached</span></div>
+    </div>
+
+    <div class="arrow c-red">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- DECISION 2 — Drift? -->
+    <div class="diamond-wrap">
+      <div class="diamond c-red">
+        <div class="d-text">
+          <div class="d-q">Drift threshold<br>breached?</div>
+          <div class="d-sub">PSI / KL / Accuracy delta / P-Lag</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="branches">
+      <div class="br">
+        <div class="br-tag no">YES — RETRAIN</div>
+        <div class="br-desc">Auto-trigger dag_weekly_model_retrain<br>out-of-schedule → returns to Step 04</div>
+      </div>
+      <div class="br">
+        <div class="br-tag no2">NO — CONTINUE</div>
+        <div class="br-desc">No action needed<br>Next daily check in 24hrs</div>
+      </div>
+    </div>
+
+    <div class="loop red" style="margin-top:8px">
+      <div class="loop-icon">↩</div>
+      <div><strong style="color:var(--red)">YES (drift) path:</strong> Airflow fires dag_weekly_model_retrain.py
+        out-of-schedule. Returns to <strong>Step 04 (Model Training)</strong> with an updated feature window from the
+        latest data.</div>
+    </div>
+
+    <div class="arrow c-red">
+      <div class="a-line"></div>
+      <span class="a-label">NO drift → continue</span>
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- DECISION 3 — New version? -->
+    <div class="diamond-wrap">
+      <div class="diamond c-violet">
+        <div class="d-text">
+          <div class="d-q">New Production version<br>being deployed?</div>
+          <div class="d-sub">From Phase 04 Step 07</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="branches">
+      <div class="br">
+        <div class="br-tag yes2">YES — RETIRE OLD</div>
+        <div class="br-desc">Demote previous version<br>→ Proceed to Phase 07</div>
+      </div>
+      <div class="br">
+        <div class="br-tag no2">NO — KEEP MONITORING</div>
+        <div class="br-desc">Loop back to Step 10<br>Next daily monitoring cycle</div>
+      </div>
+    </div>
+
+    <div class="loop green" style="margin-top:8px">
+      <div class="loop-icon">↺</div>
+      <div><strong style="color:var(--green)">NO path:</strong> No new deployment. Returns to <strong>Step 10
+          (Monitoring)</strong> — next daily cycle in 24 hours via Airflow dag_model_monitor.py.</div>
+    </div>
+
+    <div class="arrow c-violet">
+      <div class="a-line"></div>
+      <span class="a-label">YES → Phase 07</span>
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       PHASE 07 — RETIREMENT & AUDIT
+  ══════════════════════════════════════ -->
+    <div class="phase-label">
+      <div class="phase-pill">PHASE 07</div>
+      <div class="phase-name" style="color:var(--violet)">Retirement & Audit</div>
+      <div class="phase-rule"></div>
+    </div>
+
+    <div class="node c-violet">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 11</div>
+          <div class="n-title">Model Retirement & Archival</div>
+        </div>
+        <div class="badge c-violet">RETIRE</div>
+      </div>
+      <div class="n-sub">Previous Production version demoted to "Archived" in MLflow Registry. All model artefacts
+        retained permanently in MinIO <code style="color:#ddd6fe">model-artifacts/</code>. Full provenance chain
+        preserved.</div>
+      <div class="chips"><span class="chip">MLflow Registry stage demotion</span><span class="chip">MinIO
+          model-artifacts/ — permanent</span><span class="chip out">→ Retired version tagged · lineage preserved</span>
+      </div>
+    </div>
+
+    <div class="arrow c-violet">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <div class="node c-violet">
+      <div class="n-row">
+        <div>
+          <div class="n-step">STEP 12</div>
+          <div class="n-title">Audit Logging & Compliance</div>
+        </div>
+        <div class="badge c-violet">AUDIT</div>
+      </div>
+      <div class="n-sub">Every model version change, prediction run, and data access generates an audit log entry —
+        captured via Apache Ranger on Doris + Elasticsearch <code style="color:#ddd6fe">audit-logs-*</code> index.
+        1-year immutable retention for regulatory compliance.</div>
+      <div class="chips"><span class="chip">Apache Ranger on Doris</span><span class="chip">Elasticsearch audit-logs-*
+          index</span><span class="chip">1-year immutable retention</span><span class="chip">Full provenance: dataset →
+          params → model → predictions</span><span class="chip out">→ Audit entry created · lifecycle complete</span>
+      </div>
+    </div>
+
+    <div class="arrow c-green">
+      <div class="a-line"></div>
+      <div class="a-head"></div>
+    </div>
+
+    <!-- ══ END ══ -->
+    <div class="terminal end">
+      <div class="t-title">END OF RETIREMENT CYCLE</div>
+      <div class="t-sub">New version active &nbsp;·&nbsp; Monitoring continues from Step 10</div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+       LEGEND
+  ══════════════════════════════════════ -->
+    <div class="legend">
+      <div class="legend-title">Legend</div>
+      <div class="legend-row">
+        <div class="li">
+          <div class="li-box"></div>Process Step
+        </div>
+        <div class="li">
+          <div class="li-dia"></div>Decision
+        </div>
+        <div class="li">
+          <div class="li-pill"></div>Start / End
+        </div>
+        <div class="li">
+          <div class="li-line-solid"></div>Main flow
+        </div>
+        <div class="li">
+          <div class="li-line-dash"></div>Feedback / retrain loop
+        </div>
+      </div>
+      <div class="legend-row">
+        <div class="li">
+          <div class="li-dot" style="background:var(--blue)"></div>Data Access
+        </div>
+        <div class="li">
+          <div class="li-dot" style="background:var(--cyan)"></div>Experiment
+        </div>
+        <div class="li">
+          <div class="li-dot" style="background:var(--green)"></div>Training
+        </div>
+        <div class="li">
+          <div class="li-dot" style="background:var(--amber)"></div>Registry / Deploy
+        </div>
+        <div class="li">
+          <div class="li-dot" style="background:var(--purple)"></div>Serving
+        </div>
+        <div class="li">
+          <div class="li-dot" style="background:var(--red)"></div>Monitoring
+        </div>
+        <div class="li">
+          <div class="li-dot" style="background:var(--violet)"></div>Retirement
+        </div>
+      </div>
+      <div class="legend-foot">Telecom Data Platform v3.0 &nbsp;·&nbsp; ML/AI Layer (L7) &nbsp;·&nbsp; Huawei Cloud
+        &nbsp;·&nbsp; 12 Models &nbsp;·&nbsp; Apache Airflow · MLflow · Flink &nbsp;·&nbsp; February 2026</div>
+    </div>
+
+  </div><!-- /chart -->
+</body>
+
+</html>

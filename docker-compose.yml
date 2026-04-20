@@ -1,0 +1,54 @@
+services:
+  ollama:
+    image: ollama/ollama
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - OLLAMA_KEEP_ALIVE=-1
+    volumes:
+      - ./ollama_data:/root/.ollama
+    ports:
+      - "7020:11434"
+    restart: always
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    ports:
+      - "7072:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/proxy_server_config.yaml
+    environment:
+      - LITELLM_MASTER_KEY=sk-A2PqYnyEcNmuRSMQerWgiDIs
+      - UI_USERNAME=admin
+      - UI_PASSWORD=sk-A2PqYnyEcNmuRSMQerWgiDIs
+      - DATABASE_URL=postgresql://user:pass@postgres/litellm
+    command: --config /app/proxy_server_config.yaml --port 4000
+    depends_on:
+      - ollama
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=litellm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  saas-app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LITELLM_URL=http://litellm:4000
+      - LITELLM_MASTER_KEY=sk-A2PqYnyEcNmuRSMQerWgiDIs
+    depends_on:
+      - litellm
+    restart: always
+
+volumes:
+  postgres_data:
+  ollama_data:

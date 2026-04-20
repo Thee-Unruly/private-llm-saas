@@ -1,0 +1,24 @@
+# Secrets & config with credentials (use litellm_config.example.yaml instead)
+litellm_config.yaml
+
+# SSH keys & Ollama model blobs
+ollama_data/
+
+# Runtime/generated files
+gpu_status.txt
+
+# Docker
+postgres_data/
+
+# Models
+models/*
+!models/.gitkeep
+gemma-3-4b-it/
+
+# Env
+.env
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
