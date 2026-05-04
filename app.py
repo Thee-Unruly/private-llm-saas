@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -7,17 +8,24 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import requests
 import secrets
 import time
 import uuid
 from mem0 import Memory
 
-app = FastAPI(title="LiteLLM SaaS Registration API")
+app = FastAPI(title="Memory-Enabled Ollama API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configuration from environment variables
-LITELLM_URL = os.getenv("LITELLM_URL", "http://litellm:4000")
-MASTER_KEY = os.getenv("LITELLM_MASTER_KEY", "sk-change-me-master-key")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
 POSTGRES_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@postgres/litellm")
 APP_AUTH_SECRET = os.getenv("APP_AUTH_SECRET", "")
@@ -116,59 +124,6 @@ def get_current_identity(authorization: Optional[str] = Header(default=None)) ->
         raise HTTPException(status_code=401, detail="Invalid access token")
     return {"user_id": user_id, "team_id": team_id, "email": email}
 
-class LiteLLMSaaSManager:
-    def __init__(self, base_url=LITELLM_URL, master_key=MASTER_KEY):
-        self.base_url = base_url
-        self.headers = {
-            "Authorization": f"Bearer {master_key}",
-            "Content-Type": "application/json"
-        }
-
-    def create_team(self, team_name: str, max_budget: float = 10.0, models: Optional[List[str]] = None):
-        url = f"{self.base_url}/team/new"
-        model_list = models or ["gemma2-9b"]
-        data = {
-            "team_alias": team_name,
-            "max_budget": max_budget,
-            "models": model_list
-        }
-        response = requests.post(url, headers=self.headers, json=data)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-        return response.json()['team_id']
-
-    def create_user(self, email: str, team_id: Optional[str] = None):
-        url = f"{self.base_url}/user/new"
-        user_id = str(uuid.uuid4())
-        data: Dict[str, Any] = {
-            "user_email": email,
-            "user_id": user_id
-        }
-        if team_id:
-            data["teams"] = [team_id]
-
-        response = requests.post(url, headers=self.headers, json=data)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-        return user_id
-
-    def generate_key_for_user(self, user_id: str, team_id: Optional[str] = None, key_alias: str = "Default Key"):
-        url = f"{self.base_url}/key/generate"
-        data = {
-            "user_id": user_id,
-            "key_alias": key_alias,
-            "models": ["gemma2-9b"]
-        }
-        if team_id:
-            data["team_id"] = team_id
-
-        response = requests.post(url, headers=self.headers, json=data)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-        return response.json()['key']
-
-manager = LiteLLMSaaSManager()
-
 class RegistrationRequest(BaseModel):
     email: str
     company_name: str
@@ -236,6 +191,80 @@ def _normalize_ollama_model(model_name: Optional[str]) -> str:
         return "gemma2:9b"
     return model_name
 
+
+def _extract_profile_facts(text: str) -> List[str]:
+    facts: List[str] = []
+    normalized_text = text.strip()
+    if not normalized_text:
+        return facts
+
+    name_match = re.search(r"\bmy name is\s+([A-Z][a-zA-Z'-]*)", normalized_text, flags=re.IGNORECASE)
+    if name_match:
+        name = name_match.group(1)
+        facts.append(f"The user's name is {name}.")
+
+    preference_patterns = [
+        r"\bi prefer concise answers\b",
+        r"\bkeep (?:your|the) answers concise\b",
+        r"\bi prefer brief answers\b",
+        r"\bkeep (?:your|the) answers brief\b",
+    ]
+    if any(re.search(pattern, normalized_text, flags=re.IGNORECASE) for pattern in preference_patterns):
+        facts.append("The user prefers concise answers.")
+
+    return facts
+
+
+def _deduplicate_strings(items: List[str]) -> List[str]:
+    seen = set()
+    unique_items: List[str] = []
+    for item in items:
+        key = item.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique_items.append(item.strip())
+    return unique_items
+
+
+def _build_profile_summary(memory_items: List[str]) -> str:
+    extracted_facts: List[str] = []
+    for item in memory_items:
+        stripped_item = item.strip()
+        if stripped_item.startswith("The user's name is ") or stripped_item.startswith("The user prefers "):
+            extracted_facts.append(stripped_item)
+            continue
+        extracted_facts.extend(_extract_profile_facts(item))
+
+    profile_facts = _deduplicate_strings(extracted_facts)
+    if not profile_facts:
+        return ""
+    return "\n".join(profile_facts)
+
+
+def _is_self_knowledge_question(text: str) -> bool:
+    normalized_text = text.strip().lower()
+    prompts = [
+        "what do you know about me",
+        "who am i",
+        "summarize what you know about me",
+        "tell me what you know about me",
+    ]
+    return any(prompt in normalized_text for prompt in prompts)
+
+
+def _build_profile_reply(profile_summary: str) -> str:
+    profile_lines = [line.strip() for line in profile_summary.splitlines() if line.strip()]
+    rendered_facts: List[str] = []
+    for line in profile_lines:
+        if line.startswith("The user's name is "):
+            rendered_facts.append(line.replace("The user's name is ", "Your name is ").rstrip("."))
+        elif line.startswith("The user prefers "):
+            rendered_facts.append(line.replace("The user ", "You ").rstrip("."))
+    if not rendered_facts:
+        return "I do not know anything about you yet. Share a few details and I will remember them for later chats."
+    return "\n".join(rendered_facts) + "."
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_current_identity)):
     try:
@@ -249,6 +278,9 @@ async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_curr
             top_k=5
         )
         memory_text = "\n".join([m["memory"] for m in past_memories.get("results", [])])
+        all_memories = memory.get_all(filters=filters)
+        all_memory_text = [item["memory"] for item in all_memories.get("results", []) if item.get("memory")]
+        profile_summary = _build_profile_summary(all_memory_text)
 
         system_prompt = (
             "You are a helpful assistant. Keep tenant data isolated and only use memories"
@@ -267,27 +299,35 @@ async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_curr
                 "\n\nTrusted memory for this authenticated user:\n"
                 f"{memory_text}\n\nUse these memories when they help answer the question."
             )
+        if profile_summary:
+            system_prompt += (
+                "\n\nStable user profile facts:\n"
+                f"{profile_summary}\n\nPrefer these facts when the user asks about themselves."
+            )
 
-        # 2. Send directly to Ollama for inference
-        ollama_model = _normalize_ollama_model(request.model)
-        payload = {
-            "model": ollama_model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": request.message}
-            ],
-            "stream": False,
-        }
-        response = requests.post(
-            f"{OLLAMA_URL}/api/chat",
-            headers={"Content-Type": "application/json"},
-            json=payload,
-            timeout=120
-        )
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+        if _is_self_knowledge_question(request.message):
+            assistant_reply = _build_profile_reply(profile_summary)
+        else:
+            # 2. Send directly to Ollama for inference
+            ollama_model = _normalize_ollama_model(request.model)
+            payload = {
+                "model": ollama_model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": request.message}
+                ],
+                "stream": False,
+            }
+            response = requests.post(
+                f"{OLLAMA_URL}/api/chat",
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=120
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
 
-        assistant_reply = response.json()["message"]["content"]
+            assistant_reply = response.json()["message"]["content"]
 
         # 3. Save exchange to memory — user_id as direct param ✅
         memory.add(
@@ -299,6 +339,15 @@ async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_curr
             agent_id=identity["team_id"],
             run_id=request.conversation_id
         )
+
+        extracted_profile_facts = _deduplicate_strings(_extract_profile_facts(request.message))
+        if extracted_profile_facts:
+            memory.add(
+                [{"role": "user", "content": " ".join(extracted_profile_facts)}],
+                user_id=identity["user_id"],
+                agent_id=identity["team_id"],
+                run_id=request.conversation_id
+            )
 
         return {
             "reply": assistant_reply,

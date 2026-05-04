@@ -43,14 +43,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - LITELLM_URL=http://litellm:4000
-      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-change-me-master-key}
       - DATABASE_URL=${DATABASE_URL:-postgresql://user:pass@postgres/litellm}
       - OLLAMA_URL=http://ollama:11434
       - APP_AUTH_SECRET=${APP_AUTH_SECRET:-change-me-app-auth-secret}
       - ACCESS_TOKEN_TTL_SECONDS=${ACCESS_TOKEN_TTL_SECONDS:-86400}
     depends_on:
-      - litellm
+      - ollama
     restart: always
 
 volumes:
