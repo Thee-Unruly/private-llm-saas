@@ -3,3 +3,7 @@ uvicorn
 requests
 pydantic
 pydantic-settings
+mem0ai
+psycopg2-binary
+ollama
+mem0ai

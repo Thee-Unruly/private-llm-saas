@@ -29,7 +29,7 @@ services:
     restart: always
 
   postgres:
-    image: postgres:15
+    image: pgvector/pgvector:pg15
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=pass

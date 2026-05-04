@@ -1,0 +1,117 @@
+
+
+**Here's how the flow works:**
+
+1. **PDF Upload** → User submits a PDF document
+
+2. **PDF → Images** → Convert PDF to page images (using PyPDF2, pdf2image, or Docling)
+
+3. **Layout Detection** → Analyze the image to detect regions:
+   - Text blocks
+   - Tables
+   - Headers/footers
+   - Images/diagrams
+   - Creates bounding boxes for each region
+
+4. **Reading Order Sort** → Reorder detected regions logically (top-to-bottom, left-to-right) so text flows naturally
+
+5. **Chunk-wise OCR** → For **each chunk/region**:
+   - Crop the specific region from the image
+   - Send **only that chunk** to olmocr2-7b
+   - Collect raw extracted text
+   - Move to next chunk
+   - **This is the key improvement** — smaller inputs = better accuracy
+
+6. **Aggregate Text** → Combine all chunks into a coherent document text
+
+7. **Schema-Driven Extraction** → Send the full aggregated text + a JSON schema to gemma2-9b:
+   ```json
+   {
+     "schema": {
+       "company_name": "string",
+       "invoice_date": "date",
+       "line_items": ["array of {description, qty, price}"],
+       "total": "float"
+     }
+   }
+   ```
+
+8. **Validate & Return** → Gemma2 structures the extracted data into the schema format, you validate it, return to user.
+
+**Why This Beats Single-Shot:**
+- ❌ Old: Throw whole page at vision model → hallucinations
+- ✅ New: Process regions → OCR is focused → fewer errors → Schema extraction is clean
+
+**Do you want me to build this?** I can create:
+- `pipeline.py` with the chunking logic
+- app.py endpoint that orchestrates the flow
+- Config additions for each model
+
+No, actually we don't **need** a separate layout-detector model. We have better options:
+
+**Option 1: Use Python libraries (Recommended)**
+- **Docling** — Purpose-built PDF parser that does layout detection, reading order, and chunking automatically
+- **LayoutParser** — Lightweight layout detection without needing another LLM
+- **pdf2image + OpenCV** — Simple region detection without ML overhead
+
+**Option 2: Reuse existing models**
+- Use **olmocr2** to detect regions while it OCRs
+- Use **gemma2** to infer layout structure from OCR output
+
+**Option 3: Add a dedicated model** (only if you need perfect layout detection)
+- Requires pulling another model into Ollama
+- Adds GPU memory overhead
+- Slower pipeline
+
+**My Recommendation:**
+Start with **Docling** — it's a dedicated library that handles PDF → layout + chunks without needing another LLM. Then:
+1. Docling extracts chunks + reading order automatically
+2. Send each chunk to olmocr2-7b for OCR
+3. Aggregate + send to gemma2-9b for JSON structuring
+
+This keeps your config simple and your pipeline fast. 
+
+Should I build the pipeline using **Docling** instead, or would you prefer a different approach?
+
+Read [](file:///c%3A/Users/ibrahim.fadhili/Music/VLLM/litellm_config.yaml)
+
+This is a much smarter architecture. The key insight is **chunking before vision processing** — it will dramatically improve accuracy and consistency. Let me propose implementing this:
+
+**Your Pipeline Should Be:**
+1. **Layout Detection** → Detect regions (tables, text blocks, headers)
+2. **Reading Order** → Sort regions logically
+3. **Vision Model per Chunk** → Process individual regions with ollama/olmocr2
+4. **Schema Extraction** → Use gemma2-9b to structure JSON from extracted text
+5. **Validation** → Ensure data integrity
+
+**To support this, I'd recommend adding a layout detection model to litellm:**
+
+```yaml
+- model_name: layout-detector
+  litellm_params:
+    model: ollama/llama2-vision   # or docquery/layoutlm
+    api_base: http://vllm-ollama-1:11434
+```
+
+**Then implement in your app.py:**
+- PDF → image conversion
+- Layout detection to find regions
+- For each region: OCR with olmocr2
+- JSON schema extraction with gemma2
+
+Would you like me to:
+1. **Update litellm_config.yaml** with layout detection models?
+2. **Create a new Python module** (`pipeline.py`) that implements this chunking workflow?
+3. **Modify app.py** to expose this as an endpoint?
+
+What would be most useful right now?
+
+Ran terminal command:  docker exec $(docker ps -qf "name=ollama") ollama rm llava:7b
+
+Ran terminal command:  docker exec $(docker ps -qf "name=ollama") ollama list
+
+Done. llava:7b has been deleted. You now have:
+- ✅ **olmocr2:7b-q8** — OCR model
+- ✅ **gemma2:9b** — Reasoning & JSON extraction
+
+Ready to build the pipeline?

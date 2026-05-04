@@ -4,6 +4,11 @@ model_list:
       model: ollama/gemma2:9b
       api_base: http://vllm-ollama-1:11434
 
+  - model_name: olmocr2-7b
+    litellm_params:
+      model: ollama/richardyoung/olmocr2:7b-q8
+      api_base: http://vllm-ollama-1:11434
+
 general_settings:
   master_key: sk-PLACEHOLDER
   proxy_ui: true
