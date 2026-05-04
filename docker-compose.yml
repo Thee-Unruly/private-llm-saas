@@ -18,10 +18,10 @@ services:
     volumes:
       - ./litellm_config.yaml:/app/proxy_server_config.yaml
     environment:
-      - LITELLM_MASTER_KEY=sk-A2PqYnyEcNmuRSMQerWgiDIs
-      - UI_USERNAME=admin
-      - UI_PASSWORD=sk-A2PqYnyEcNmuRSMQerWgiDIs
-      - DATABASE_URL=postgresql://user:pass@postgres/litellm
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-change-me-master-key}
+      - UI_USERNAME=${LITELLM_UI_USERNAME:-admin}
+      - UI_PASSWORD=${LITELLM_UI_PASSWORD:-change-me-ui-password}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://user:pass@postgres/litellm}
     command: --config /app/proxy_server_config.yaml --port 4000
     depends_on:
       - ollama
@@ -31,9 +31,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg15
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=litellm
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pass}
+      - POSTGRES_DB=${POSTGRES_DB:-litellm}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
@@ -44,7 +44,11 @@ services:
       - "8000:8000"
     environment:
       - LITELLM_URL=http://litellm:4000
-      - LITELLM_MASTER_KEY=sk-A2PqYnyEcNmuRSMQerWgiDIs
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-change-me-master-key}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://user:pass@postgres/litellm}
+      - OLLAMA_URL=http://ollama:11434
+      - APP_AUTH_SECRET=${APP_AUTH_SECRET:-change-me-app-auth-secret}
+      - ACCESS_TOKEN_TTL_SECONDS=${ACCESS_TOKEN_TTL_SECONDS:-86400}
     depends_on:
       - litellm
     restart: always
