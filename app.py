@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -30,6 +31,7 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
 POSTGRES_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@postgres/litellm")
 APP_AUTH_SECRET = os.getenv("APP_AUTH_SECRET", "")
 ACCESS_TOKEN_TTL_SECONDS = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "86400"))
+TEST_UI_PATH = os.path.join(os.path.dirname(__file__), "test_ui.html")
 
 if not APP_AUTH_SECRET:
     raise RuntimeError("APP_AUTH_SECRET must be set for authenticated multi-user access")
@@ -381,3 +383,10 @@ async def get_memories(
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+@app.get("/test-ui")
+async def test_ui():
+    if not os.path.exists(TEST_UI_PATH):
+        raise HTTPException(status_code=404, detail="Test UI not found")
+    return FileResponse(TEST_UI_PATH)
