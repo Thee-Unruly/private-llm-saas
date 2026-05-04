@@ -205,11 +205,28 @@ def _extract_profile_facts(text: str) -> List[str]:
         name = name_match.group(1)
         facts.append(f"The user's name is {name}.")
 
+    canonical_name_match = re.search(r"\bthe user's name is\s+([A-Z][a-zA-Z'-]*)", normalized_text, flags=re.IGNORECASE)
+    if canonical_name_match:
+        name = canonical_name_match.group(1)
+        facts.append(f"The user's name is {name}.")
+
+    inferred_name_match = re.search(
+        r"\b([A-Z][a-zA-Z'-]*)\s+prefers\s+(?:concise|brief)\s+answers\b",
+        normalized_text,
+    )
+    if inferred_name_match:
+        name = inferred_name_match.group(1)
+        facts.append(f"The user's name is {name}.")
+
     preference_patterns = [
         r"\bi prefer concise answers\b",
         r"\bkeep (?:your|the) answers concise\b",
         r"\bi prefer brief answers\b",
         r"\bkeep (?:your|the) answers brief\b",
+        r"\bthe user prefers concise answers\b",
+        r"\bthe user prefers brief answers\b",
+        r"\b[A-Z][a-zA-Z'-]*\s+prefers\s+concise\s+answers\b",
+        r"\b[A-Z][a-zA-Z'-]*\s+prefers\s+brief\s+answers\b",
     ]
     if any(re.search(pattern, normalized_text, flags=re.IGNORECASE) for pattern in preference_patterns):
         facts.append("The user prefers concise answers.")
@@ -262,7 +279,7 @@ def _build_profile_reply(profile_summary: str) -> str:
         if line.startswith("The user's name is "):
             rendered_facts.append(line.replace("The user's name is ", "Your name is ").rstrip("."))
         elif line.startswith("The user prefers "):
-            rendered_facts.append(line.replace("The user ", "You ").rstrip("."))
+            rendered_facts.append(line.replace("The user prefers ", "You prefer ").rstrip("."))
     if not rendered_facts:
         return "I do not know anything about you yet. Share a few details and I will remember them for later chats."
     return "\n".join(rendered_facts) + "."
