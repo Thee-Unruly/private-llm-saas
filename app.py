@@ -256,6 +256,9 @@ async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_curr
             "When relevant memory is provided below, treat it as trusted context from prior"
             " conversations with this same authenticated user. "
             "If the user asks what you know about them, answer directly from that memory. "
+            "If no relevant memory is provided, say naturally that you do not know anything"
+            " about them yet and invite them to share details. "
+            "Do not ask the user to provide memory or refer to hidden system context. "
             "Do not claim you have no memory when relevant context is provided. "
             "Keep answers concise."
         )
