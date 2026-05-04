@@ -252,10 +252,18 @@ async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_curr
 
         system_prompt = (
             "You are a helpful assistant. Keep tenant data isolated and only use memories"
-            " belonging to the authenticated user and team."
+            " belonging to the authenticated user and team. "
+            "When relevant memory is provided below, treat it as trusted context from prior"
+            " conversations with this same authenticated user. "
+            "If the user asks what you know about them, answer directly from that memory. "
+            "Do not claim you have no memory when relevant context is provided. "
+            "Keep answers concise."
         )
         if memory_text:
-            system_prompt += f"\n\nRelevant context from past conversations:\n{memory_text}"
+            system_prompt += (
+                "\n\nTrusted memory for this authenticated user:\n"
+                f"{memory_text}\n\nUse these memories when they help answer the question."
+            )
 
         # 2. Send directly to Ollama for inference
         ollama_model = _normalize_ollama_model(request.model)
