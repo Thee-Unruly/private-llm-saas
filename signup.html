@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --surface: rgba(255, 255, 255, 0.86);
+            --surface-strong: #ffffff;
+            --ink: #17202b;
+            --muted: #627083;
+            --line: rgba(23, 32, 43, 0.1);
+            --accent: #1f6feb;
+            --accent-strong: #1558bb;
+            --success: #0f9d74;
+            --danger: #c53b3b;
+            --shadow: 0 18px 60px rgba(20, 31, 48, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(31, 111, 235, 0.1), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(15, 157, 116, 0.08), transparent 24%),
+                linear-gradient(180deg, #eef2f7 0%, #f4f6f8 48%, #edf2f7 100%);
+            padding: 24px;
+        }
+
+        .app-shell {
+            width: min(1180px, 100%);
+            margin: 0 auto;
+            display: grid;
+            gap: 20px;
+        }
+
+        .app-header,
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        .app-header {
+            border-radius: var(--radius-xl);
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: grid;
+            gap: 2px;
+        }
+
+        .brand-mark,
+        .eyebrow,
+        input,
+        button,
+        .mono {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .brand-mark {
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent-strong);
+        }
+
+        .brand-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.95rem;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-links a.active {
+            color: var(--ink);
+            border-bottom-color: var(--accent);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 0.95fr 1.05fr;
+            gap: 20px;
+        }
+
+        .panel {
+            border-radius: var(--radius-xl);
+            padding: 28px;
+        }
+
+        .hero,
+        .form-panel {
+            display: grid;
+            gap: 18px;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-strong);
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 4vw, 4.5rem);
+            line-height: 0.94;
+            letter-spacing: -0.06em;
+            max-width: 10ch;
+        }
+
+        .copy,
+        .hint,
+        .status {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.68);
+            border: 1px solid rgba(23, 32, 43, 0.06);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .form-panel h2 {
+            font-size: 1.55rem;
+        }
+
+        .field-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .two-col {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        label {
+            display: grid;
+            gap: 7px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        input {
+            width: 100%;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--line);
+            background: var(--surface-strong);
+            color: var(--ink);
+            padding: 13px 14px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: rgba(31, 111, 235, 0.36);
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button,
+        .button-link {
+            border-radius: 999px;
+            padding: 12px 16px;
+            border: 1px solid var(--line);
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #5c96f5 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .button-link {
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .status {
+            min-height: 42px;
+        }
+
+        .status.error {
+            color: var(--danger);
+        }
+
+        .status.success {
+            color: var(--success);
+        }
+
+        @media (max-width: 920px) {
+
+            .content-grid,
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-mark">Memory Console</div>
+                <div class="brand-title">Client Auth</div>
+            </div>
+            <nav class="nav-links" aria-label="Primary">
+                <a href="/login">Login</a>
+                <a href="/signup" class="active">Sign Up</a>
+            </nav>
+        </header>
+
+        <main class="content-grid">
+            <section class="panel hero">
+                <div class="eyebrow">Registration</div>
+                <h1>Create a user, then enter chat.</h1>
+                <p class="copy">This page uses <span class="mono">/register</span> to create a new identity, store the
+                    returned token locally, and open the chat UI already signed in as that user.</p>
+                <div class="feature-list">
+                    <div class="feature">Create separate users with different emails when you want to compare memory
+                        isolation and response behavior.</div>
+                    <div class="feature">After signup, the chat page will automatically pick up the new identity.</div>
+                </div>
+            </section>
+
+            <section class="panel form-panel">
+                <div>
+                    <div class="eyebrow">Sign Up</div>
+                    <h2>Create account</h2>
+                    <p class="hint">This is still your current token-based backend. Sign up here means the app issues a
+                        new access token and carries it into chat.</p>
+                </div>
+                <div class="field-grid two-col">
+                    <label for="api-base-url">API Base URL
+                        <input id="api-base-url" type="text" value="http://localhost:8000">
+                    </label>
+                    <label for="display-name">Display Name
+                        <input id="display-name" type="text" placeholder="Client A">
+                    </label>
+                    <label for="email">Email
+                        <input id="email" type="email" placeholder="client@example.com">
+                    </label>
+                    <label for="company">Company
+                        <input id="company" type="text" placeholder="Client A Ltd">
+                    </label>
+                    <label for="budget">Max Budget
+                        <input id="budget" type="number" min="0" step="0.1" value="10">
+                    </label>
+                </div>
+                <div class="button-row">
+                    <button class="primary" type="button" onclick="signUpUser()">Create User And Open Chat</button>
+                    <a class="button-link" href="/login">Already Have A Token</a>
+                </div>
+                <div id="status" class="status"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'memory-chat-users-v1';
+        const SESSION_USER_KEY = 'memory-chat-session-user-id';
+        const AUTH_HANDOFF_KEY = 'memory-chat-auth-handoff';
+        const AUTH_COOKIE_NAME = 'memory_chat_session';
+
+        function getApiBaseUrl() {
+            return document.getElementById('api-base-url').value.trim().replace(/\/$/, '');
+        }
+
+        function setSessionCookie(token) {
+            document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; Max-Age=86400; SameSite=Lax`;
+        }
+
+        function setStatus(message, tone = '') {
+            const node = document.getElementById('status');
+            node.className = `status ${tone}`.trim();
+            node.textContent = message;
+        }
+
+        function upsertUserRecord(user) {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const users = Array.isArray(saved.users) ? saved.users : [];
+            const existingIndex = users.findIndex((entry) => entry.userId === user.userId && entry.teamId === user.teamId);
+            if (existingIndex >= 0) {
+                users[existingIndex] = { ...users[existingIndex], ...user };
+            } else {
+                users.unshift(user);
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ users, activeUserId: user.id }));
+        }
+
+        async function signUpUser() {
+            const displayName = document.getElementById('display-name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const companyName = document.getElementById('company').value.trim();
+            const maxBudget = Number(document.getElementById('budget').value || '10');
+
+            if (!email || !companyName) {
+                setStatus('Email and company are required.', 'error');
+                return;
+            }
+
+            setStatus('Creating user...');
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        company_name: companyName,
+                        max_budget: maxBudget
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Registration failed');
+                }
+
+                const user = {
+                    id: crypto.randomUUID(),
+                    displayName: displayName || email,
+                    email,
+                    companyName,
+                    token: data.data.access_token,
+                    userId: data.data.user_id,
+                    teamId: data.data.team_id,
+                    conversationId: `thread-${data.data.user_id.slice(0, 8)}`,
+                    source: 'registered',
+                    note: ''
+                };
+
+                upsertUserRecord(user);
+                localStorage.setItem(SESSION_USER_KEY, user.id);
+                sessionStorage.setItem(AUTH_HANDOFF_KEY, JSON.stringify(user));
+                localStorage.setItem('memory-chat-default-api-base', getApiBaseUrl());
+                setSessionCookie(user.token);
+                setStatus('Signup successful. Redirecting to chat...', 'success');
+                window.location.href = '/chat-ui';
+            } catch (error) {
+                setStatus(error.message, 'error');
+            }
+        }
+
+        const defaultApiBase = localStorage.getItem('memory-chat-default-api-base');
+        if (defaultApiBase) {
+            document.getElementById('api-base-url').value = defaultApiBase;
+        }
+    </script>
+</body>
+
+</html>

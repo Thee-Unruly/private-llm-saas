@@ -1,6 +1,6 @@
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Cookie, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, ConfigDict
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -31,7 +31,11 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
 POSTGRES_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@postgres/litellm")
 APP_AUTH_SECRET = os.getenv("APP_AUTH_SECRET", "")
 ACCESS_TOKEN_TTL_SECONDS = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "86400"))
+AUTH_COOKIE_NAME = os.getenv("AUTH_COOKIE_NAME", "memory_chat_session")
 TEST_UI_PATH = os.path.join(os.path.dirname(__file__), "test_ui.html")
+CHAT_UI_PATH = os.path.join(os.path.dirname(__file__), "chat_ui.html")
+LOGIN_UI_PATH = os.path.join(os.path.dirname(__file__), "login.html")
+SIGNUP_UI_PATH = os.path.join(os.path.dirname(__file__), "signup.html")
 
 if not APP_AUTH_SECRET:
     raise RuntimeError("APP_AUTH_SECRET must be set for authenticated multi-user access")
@@ -67,6 +71,12 @@ mem0_config = {
     }
 }
 memory = Memory.from_config(mem0_config)
+
+
+@app.get("/")
+async def root(session_token: Optional[str] = Cookie(default=None, alias=AUTH_COOKIE_NAME)):
+    destination = "/chat-ui" if _get_optional_identity_from_token(session_token) else "/login"
+    return RedirectResponse(url=destination, status_code=303)
 
 
 def _encode_token(payload: Dict[str, Any]) -> str:
@@ -114,17 +124,41 @@ def _issue_access_token(user_id: str, team_id: str, email: str) -> str:
     )
 
 
-def get_current_identity(authorization: Optional[str] = Header(default=None)) -> Dict[str, str]:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing bearer token")
-
-    payload = _decode_token(authorization.removeprefix("Bearer ").strip())
+def _identity_from_payload(payload: Dict[str, Any]) -> Dict[str, str]:
     user_id = payload.get("sub")
     team_id = payload.get("team_id")
     email = payload.get("email")
     if not isinstance(user_id, str) or not isinstance(team_id, str) or not isinstance(email, str):
         raise HTTPException(status_code=401, detail="Invalid access token")
     return {"user_id": user_id, "team_id": team_id, "email": email}
+
+
+def _identity_from_token(token: str) -> Dict[str, str]:
+    payload = _decode_token(token)
+    return _identity_from_payload(payload)
+
+
+def _get_optional_identity_from_token(token: Optional[str]) -> Optional[Dict[str, str]]:
+    if not token:
+        return None
+    try:
+        return _identity_from_token(token)
+    except HTTPException:
+        return None
+
+
+def get_current_identity(
+    authorization: Optional[str] = Header(default=None),
+    session_token: Optional[str] = Cookie(default=None, alias=AUTH_COOKIE_NAME),
+) -> Dict[str, str]:
+    if authorization and authorization.startswith("Bearer "):
+        return _identity_from_token(authorization.removeprefix("Bearer ").strip())
+
+    cookie_identity = _get_optional_identity_from_token(session_token)
+    if cookie_identity:
+        return cookie_identity
+
+    raise HTTPException(status_code=401, detail="Missing authentication")
 
 class RegistrationRequest(BaseModel):
     email: str
@@ -407,3 +441,30 @@ async def test_ui():
     if not os.path.exists(TEST_UI_PATH):
         raise HTTPException(status_code=404, detail="Test UI not found")
     return FileResponse(TEST_UI_PATH)
+
+
+@app.get("/chat-ui")
+async def chat_ui(session_token: Optional[str] = Cookie(default=None, alias=AUTH_COOKIE_NAME)):
+    if not _get_optional_identity_from_token(session_token):
+        return RedirectResponse(url="/login", status_code=303)
+    if not os.path.exists(CHAT_UI_PATH):
+        raise HTTPException(status_code=404, detail="Chat UI not found")
+    return FileResponse(CHAT_UI_PATH)
+
+
+@app.get("/login")
+async def login_ui(session_token: Optional[str] = Cookie(default=None, alias=AUTH_COOKIE_NAME)):
+    if _get_optional_identity_from_token(session_token):
+        return RedirectResponse(url="/chat-ui", status_code=303)
+    if not os.path.exists(LOGIN_UI_PATH):
+        raise HTTPException(status_code=404, detail="Login UI not found")
+    return FileResponse(LOGIN_UI_PATH)
+
+
+@app.get("/signup")
+async def signup_ui(session_token: Optional[str] = Cookie(default=None, alias=AUTH_COOKIE_NAME)):
+    if _get_optional_identity_from_token(session_token):
+        return RedirectResponse(url="/chat-ui", status_code=303)
+    if not os.path.exists(SIGNUP_UI_PATH):
+        raise HTTPException(status_code=404, detail="Sign up UI not found")
+    return FileResponse(SIGNUP_UI_PATH)

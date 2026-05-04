@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Chat Console</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --surface: rgba(255, 255, 255, 0.86);
+            --surface-strong: #ffffff;
+            --surface-soft: #f7f9fc;
+            --ink: #17202b;
+            --muted: #627083;
+            --line: rgba(23, 32, 43, 0.1);
+            --accent: #1f6feb;
+            --accent-strong: #1558bb;
+            --success: #0f9d74;
+            --danger: #c53b3b;
+            --shadow: 0 18px 60px rgba(20, 31, 48, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(31, 111, 235, 0.1), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(15, 157, 116, 0.08), transparent 24%),
+                linear-gradient(180deg, #eef2f7 0%, #f4f6f8 48%, #edf2f7 100%);
+            padding: 24px;
+        }
+
+        .app-shell {
+            width: min(1480px, 100%);
+            margin: 0 auto;
+            display: grid;
+            gap: 20px;
+        }
+
+        .app-header,
+        .sidebar,
+        .main-panel,
+        .panel,
+        .chat-log,
+        .composer {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        .app-header {
+            border-radius: var(--radius-xl);
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: grid;
+            gap: 2px;
+        }
+
+        .brand-mark,
+        .eyebrow,
+        .mono,
+        input,
+        textarea,
+        button,
+        .tiny {
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .brand-mark {
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent-strong);
+        }
+
+        .brand-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.95rem;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a.active {
+            color: var(--ink);
+            border-bottom-color: var(--accent);
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 360px minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .sidebar,
+        .main-panel {
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            padding: 20px;
+            display: grid;
+            gap: 16px;
+            align-self: start;
+            position: sticky;
+            top: 24px;
+        }
+
+        .main-panel {
+            padding: 20px;
+            display: grid;
+            gap: 18px;
+            min-height: calc(100vh - 132px);
+        }
+
+        .hero {
+            display: grid;
+            gap: 12px;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-strong);
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 3.5vw, 4rem);
+            line-height: 0.94;
+            letter-spacing: -0.06em;
+            max-width: 10ch;
+        }
+
+        .hero-copy,
+        .section-copy {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .panel {
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .field-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .two-col {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .field {
+            display: grid;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        input,
+        textarea,
+        button {
+            border-radius: var(--radius-md);
+            border: 1px solid var(--line);
+            background: var(--surface-strong);
+            color: var(--ink);
+            padding: 13px 14px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: rgba(31, 111, 235, 0.36);
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.16s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #5c96f5 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .secondary {
+            background: #fff;
+        }
+
+        .ghost {
+            background: transparent;
+        }
+
+        .button-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 12px 16px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--ink);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .user-list {
+            display: grid;
+            gap: 10px;
+            max-height: 360px;
+            overflow: auto;
+            padding-right: 2px;
+        }
+
+        .user-card {
+            background: var(--surface-soft);
+            border: 1px solid rgba(23, 32, 43, 0.08);
+            border-radius: 18px;
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .user-card.active {
+            border-color: rgba(31, 111, 235, 0.3);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 235, 0.12);
+        }
+
+        .user-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .user-name {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .user-sub {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 11px;
+            background: rgba(31, 111, 235, 0.08);
+            color: var(--accent-strong);
+        }
+
+        .user-actions,
+        .button-row,
+        .hint-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .user-actions button,
+        .hint-row button {
+            padding: 9px 11px;
+            font-size: 12px;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 18px;
+        }
+
+        .session-panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(245, 248, 252, 0.92) 100%);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(23, 32, 43, 0.08);
+            padding: 18px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .session-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(23, 32, 43, 0.08);
+            border-radius: 18px;
+            padding: 12px;
+            min-height: 84px;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .stat span {
+            word-break: break-word;
+            font-size: 13px;
+        }
+
+        .chat-log {
+            border-radius: var(--radius-xl);
+            padding: 18px;
+            min-height: 480px;
+            max-height: 62vh;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 78%;
+            padding: 14px 16px;
+            border-radius: 20px;
+            line-height: 1.6;
+            font-size: 15px;
+            white-space: pre-wrap;
+            border: 1px solid transparent;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #1f6feb;
+            color: #fff;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: #fff;
+            border-color: rgba(23, 32, 43, 0.08);
+        }
+
+        .message.system {
+            max-width: 100%;
+            align-self: stretch;
+            background: rgba(31, 111, 235, 0.06);
+            border-color: rgba(31, 111, 235, 0.12);
+        }
+
+        .message.error {
+            max-width: 100%;
+            align-self: stretch;
+            background: rgba(197, 59, 59, 0.08);
+            border-color: rgba(197, 59, 59, 0.16);
+            color: var(--danger);
+        }
+
+        .message-meta {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .composer {
+            border-radius: var(--radius-xl);
+            padding: 16px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .composer-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .empty-state {
+            display: grid;
+            place-items: center;
+            min-height: 220px;
+            color: var(--muted);
+            text-align: center;
+            padding: 24px;
+        }
+
+        @media (max-width: 1180px) {
+
+            .workspace,
+            .hero-grid,
+            .composer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .session-grid,
+            .two-col {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 820px) {
+            body {
+                padding: 14px;
+            }
+
+            .session-grid,
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .message {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-mark">Memory Console</div>
+                <div class="brand-title">Client Workspace</div>
+            </div>
+            <div class="header-actions">
+                <nav class="nav-links" aria-label="Primary">
+                    <a href="/login">Login</a>
+                    <a href="/signup">Sign Up</a>
+                    <a href="/chat-ui" class="active">Chat</a>
+                </nav>
+                <button class="secondary" type="button" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <aside class="sidebar">
+                <div class="hero">
+                    <div class="eyebrow">Workspace</div>
+                    <h1>Chat as different users with one app.</h1>
+                    <p class="hero-copy">This is the main console for switching users, setting a conversation thread,
+                        sending prompts, and checking what each identity sees.</p>
+                </div>
+
+                <section class="panel stack">
+                    <div>
+                        <h2 class="section-title">Workspace Settings</h2>
+                        <p class="section-copy">These values apply to the currently active user.</p>
+                    </div>
+                    <div class="field-grid">
+                        <div class="field">
+                            <label for="api-base-url">API Base URL</label>
+                            <input id="api-base-url" type="text" value="http://localhost:8000">
+                        </div>
+                        <div class="field">
+                            <label for="model-name">Model</label>
+                            <input id="model-name" type="text" value="gemma2:9b">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel stack">
+                    <div>
+                        <h2 class="section-title">Account Pages</h2>
+                        <p class="section-copy">Create or import users from dedicated auth pages, then continue here.
+                        </p>
+                    </div>
+                    <div class="button-row">
+                        <a class="button-link" href="/signup">Open Sign Up</a>
+                        <a class="button-link" href="/login">Open Login</a>
+                    </div>
+                </section>
+
+                <section class="panel stack">
+                    <div>
+                        <h2 class="section-title">Saved Users</h2>
+                        <p class="section-copy">Choose the active identity for the chat workspace.</p>
+                    </div>
+                    <div class="user-list" id="user-list"></div>
+                </section>
+            </aside>
+
+            <main class="main-panel">
+                <div class="hero-grid">
+                    <section class="panel">
+                        <div class="eyebrow">Active Session</div>
+                        <div id="active-session-panel" class="session-panel">
+                            <div>
+                                <h2 id="active-name">No user selected</h2>
+                                <p id="active-email" class="section-copy">Log in or sign up first, then start chatting
+                                    as that identity.</p>
+                            </div>
+                            <div class="session-grid">
+                                <div class="stat"><strong>User ID</strong><span id="active-user-id">-</span></div>
+                                <div class="stat"><strong>Team ID</strong><span id="active-team-id">-</span></div>
+                                <div class="stat"><strong>Conversation ID</strong><span
+                                        id="active-thread-preview">-</span></div>
+                                <div class="stat"><strong>Token</strong><span id="active-token-preview">-</span></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel stack">
+                        <div>
+                            <div class="eyebrow">Controls</div>
+                            <p class="section-copy">Use one thread per user when you want continuity, or switch thread
+                                IDs to start a clean conversation.</p>
+                        </div>
+                        <div class="field-grid two-col">
+                            <div class="field">
+                                <label for="conversation-id">Conversation ID</label>
+                                <input id="conversation-id" type="text" placeholder="default-thread">
+                            </div>
+                            <div class="field">
+                                <label for="session-note">Session Label</label>
+                                <input id="session-note" type="text" placeholder="Optional note shown locally">
+                            </div>
+                        </div>
+                        <div class="hint-row">
+                            <button class="secondary" type="button" onclick="loadMemories()">Load Server
+                                Memories</button>
+                            <button class="secondary" type="button"
+                                onclick="seedPrompt('My name is Ibrahim and I prefer concise answers')">Seed Name +
+                                Preference</button>
+                            <button class="secondary" type="button"
+                                onclick="seedPrompt('What do you know about me?')">Ask Recall</button>
+                            <button class="ghost" type="button" onclick="clearActiveChat()">Clear Local Chat</button>
+                        </div>
+                    </section>
+                </div>
+
+                <section id="chat-log" class="chat-log">
+                    <div class="empty-state">Choose a saved user on the left, or create one through the login or signup
+                        pages, then send messages here.</div>
+                </section>
+
+                <section class="composer">
+                    <div class="field">
+                        <label for="prompt-input">Message</label>
+                        <textarea id="prompt-input" placeholder="Send a message as the active user..."></textarea>
+                    </div>
+                    <div class="composer-grid">
+                        <div class="field">
+                            <label for="token-override">Temporary Token Override</label>
+                            <input id="token-override" type="text"
+                                placeholder="Optional. Use a different token for one-off testing.">
+                        </div>
+                        <button class="primary" id="send-button" type="button" onclick="sendMessage()">Send
+                            Message</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'memory-chat-users-v1';
+        const CHAT_STORAGE_KEY = 'memory-chat-history-v1';
+        const AUTH_HANDOFF_KEY = 'memory-chat-auth-handoff';
+        const SESSION_USER_KEY = 'memory-chat-session-user-id';
+        const AUTH_COOKIE_NAME = 'memory_chat_session';
+
+        let users = [];
+        let activeUserId = null;
+        let chatHistory = {};
+
+        function getApiBaseUrl() {
+            return document.getElementById('api-base-url').value.trim().replace(/\/$/, '');
+        }
+
+        function getModelName() {
+            return document.getElementById('model-name').value.trim() || 'gemma2:9b';
+        }
+
+        function setSessionCookie(token) {
+            document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; Max-Age=86400; SameSite=Lax`;
+        }
+
+        function clearSessionCookie() {
+            document.cookie = `${AUTH_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`;
+        }
+
+        function syncSessionUser(user) {
+            if (!user?.id || !user?.token) {
+                localStorage.removeItem(SESSION_USER_KEY);
+                clearSessionCookie();
+                return;
+            }
+
+            localStorage.setItem(SESSION_USER_KEY, user.id);
+            setSessionCookie(user.token);
+        }
+
+        function ingestAuthHandoff() {
+            const raw = sessionStorage.getItem(AUTH_HANDOFF_KEY);
+            if (!raw) {
+                return;
+            }
+            try {
+                const incomingUser = JSON.parse(raw);
+                const existingIndex = users.findIndex((entry) => entry.userId === incomingUser.userId && entry.teamId === incomingUser.teamId);
+                if (existingIndex >= 0) {
+                    users[existingIndex] = { ...users[existingIndex], ...incomingUser };
+                    activeUserId = users[existingIndex].id;
+                } else {
+                    users.unshift(incomingUser);
+                    activeUserId = incomingUser.id;
+                }
+                sessionStorage.removeItem(AUTH_HANDOFF_KEY);
+            } catch {
+                sessionStorage.removeItem(AUTH_HANDOFF_KEY);
+            }
+        }
+
+        function persistState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ users, activeUserId }));
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatHistory));
+        }
+
+        function loadState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                users = Array.isArray(saved.users) ? saved.users : [];
+                const sessionUserId = localStorage.getItem(SESSION_USER_KEY);
+                activeUserId = sessionUserId || saved.activeUserId || (users[0] && users[0].id) || null;
+            } catch {
+                users = [];
+                activeUserId = null;
+            }
+
+            try {
+                chatHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '{}');
+            } catch {
+                chatHistory = {};
+            }
+
+            const defaultApiBase = localStorage.getItem('memory-chat-default-api-base');
+            if (defaultApiBase) {
+                document.getElementById('api-base-url').value = defaultApiBase;
+            }
+
+            ingestAuthHandoff();
+        }
+
+        function getActiveUser() {
+            return users.find((user) => user.id === activeUserId) || null;
+        }
+
+        function shortenToken(token) {
+            if (!token) {
+                return '-';
+            }
+            if (token.length < 20) {
+                return token;
+            }
+            return `${token.slice(0, 12)}...${token.slice(-8)}`;
+        }
+
+        function defaultConversationId(user) {
+            return user?.conversationId || `thread-${(user?.id || 'guest').slice(0, 8)}`;
+        }
+
+        function ensureChatBucket(userId) {
+            if (!chatHistory[userId]) {
+                chatHistory[userId] = [];
+            }
+            return chatHistory[userId];
+        }
+
+        function setActiveUser(userId) {
+            activeUserId = userId;
+            const activeUser = getActiveUser();
+            document.getElementById('conversation-id').value = activeUser ? defaultConversationId(activeUser) : '';
+            document.getElementById('session-note').value = activeUser?.note || '';
+            document.getElementById('token-override').value = '';
+            syncSessionUser(activeUser);
+            persistState();
+            renderUserList();
+            renderActiveSession();
+            renderChatLog();
+        }
+
+        function saveActiveConversationSettings() {
+            const activeUser = getActiveUser();
+            if (!activeUser) {
+                return;
+            }
+            activeUser.conversationId = document.getElementById('conversation-id').value.trim() || defaultConversationId(activeUser);
+            activeUser.note = document.getElementById('session-note').value.trim();
+            persistState();
+            renderUserList();
+            renderActiveSession();
+        }
+
+        function renderUserList() {
+            const list = document.getElementById('user-list');
+            if (!users.length) {
+                list.innerHTML = '<div class="section-copy">No saved users yet.</div>';
+                return;
+            }
+
+            list.innerHTML = users.map((user) => {
+                const isActive = user.id === activeUserId;
+                return `
+                    <article class="user-card ${isActive ? 'active' : ''}">
+                        <div class="user-head">
+                            <div>
+                                <div class="user-name">${escapeHtml(user.displayName || user.email || 'Unnamed user')}</div>
+                                <div class="user-sub">${escapeHtml(user.email || 'Imported token')}<br>${escapeHtml(user.companyName || 'No company')}</div>
+                            </div>
+                            <span class="pill">${user.source === 'imported' ? 'Imported' : 'Registered'}</span>
+                        </div>
+                        <div class="tiny user-sub">thread: ${escapeHtml(defaultConversationId(user))}</div>
+                        <div class="user-actions">
+                            <button class="${isActive ? 'primary' : 'secondary'}" type="button" onclick="setActiveUser('${user.id}')">${isActive ? 'Active' : 'Use This User'}</button>
+                            <button class="ghost" type="button" onclick="copyToken('${user.id}')">Copy Token</button>
+                            <button class="ghost" type="button" onclick="removeUser('${user.id}')">Remove</button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function renderActiveSession() {
+            const activeUser = getActiveUser();
+            document.getElementById('active-name').textContent = activeUser ? (activeUser.displayName || activeUser.email || 'Active user') : 'No user selected';
+            document.getElementById('active-email').textContent = activeUser
+                ? `${activeUser.email || 'Imported token'}${activeUser.companyName ? ` · ${activeUser.companyName}` : ''}`
+                : 'Create or import a user, then start chatting as that identity.';
+            document.getElementById('active-user-id').textContent = activeUser?.userId || '-';
+            document.getElementById('active-team-id').textContent = activeUser?.teamId || '-';
+            document.getElementById('active-thread-preview').textContent = activeUser ? defaultConversationId(activeUser) : '-';
+            document.getElementById('active-token-preview').textContent = activeUser ? shortenToken(activeUser.token) : '-';
+        }
+
+        function renderChatLog() {
+            const log = document.getElementById('chat-log');
+            const activeUser = getActiveUser();
+            if (!activeUser) {
+                log.innerHTML = '<div class="empty-state">Choose a saved user on the left, or create one, then send messages here.</div>';
+                return;
+            }
+
+            const entries = ensureChatBucket(activeUser.id);
+            if (!entries.length) {
+                log.innerHTML = `<div class="empty-state">No local chat history for ${escapeHtml(activeUser.displayName || activeUser.email || 'this user')} yet.</div>`;
+                return;
+            }
+
+            log.innerHTML = entries.map((entry) => {
+                const meta = entry.meta ? `<div class="message-meta">${escapeHtml(entry.meta)}</div>` : '';
+                return `<div class="message ${entry.role}">${escapeHtml(entry.text)}${meta}</div>`;
+            }).join('');
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function addChatEntry(userId, role, text, meta = '') {
+            const bucket = ensureChatBucket(userId);
+            bucket.push({ role, text, meta });
+            persistState();
+            if (userId === activeUserId) {
+                renderChatLog();
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function sendMessage(presetText = '') {
+            const activeUser = getActiveUser();
+            if (!activeUser) {
+                alert('Create or import a user first.');
+                return;
+            }
+
+            saveActiveConversationSettings();
+
+            const promptInput = document.getElementById('prompt-input');
+            const sendButton = document.getElementById('send-button');
+            const tokenOverride = document.getElementById('token-override').value.trim();
+            const token = tokenOverride || activeUser.token;
+            const message = (presetText || promptInput.value).trim();
+            const conversationId = document.getElementById('conversation-id').value.trim() || defaultConversationId(activeUser);
+
+            if (!message) {
+                return;
+            }
+
+            addChatEntry(activeUser.id, 'user', message, `thread=${conversationId}`);
+            if (!presetText) {
+                promptInput.value = '';
+            }
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message,
+                        model: getModelName(),
+                        conversation_id: conversationId
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Chat request failed');
+                }
+
+                addChatEntry(
+                    activeUser.id,
+                    'assistant',
+                    data.reply,
+                    `memories_used=${data.memories_used} · user_id=${data.user_id}`
+                );
+            } catch (error) {
+                addChatEntry(activeUser.id, 'error', error.message);
+            } finally {
+                sendButton.disabled = false;
+            }
+        }
+
+        async function loadMemories() {
+            const activeUser = getActiveUser();
+            if (!activeUser) {
+                alert('Select a user first.');
+                return;
+            }
+            saveActiveConversationSettings();
+            const conversationId = document.getElementById('conversation-id').value.trim() || defaultConversationId(activeUser);
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/memories?conversation_id=${encodeURIComponent(conversationId)}`, {
+                    headers: { Authorization: `Bearer ${activeUser.token}` }
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to load memories');
+                }
+
+                const lines = (data.results || []).map((item) => item.memory).filter(Boolean);
+                addChatEntry(activeUser.id, 'system', lines.length ? lines.join('\n') : 'No memories stored for this thread yet.', `thread=${conversationId}`);
+            } catch (error) {
+                addChatEntry(activeUser.id, 'error', error.message);
+            }
+        }
+
+        function seedPrompt(text) {
+            document.getElementById('prompt-input').value = text;
+            sendMessage(text);
+        }
+
+        function clearActiveChat() {
+            const activeUser = getActiveUser();
+            if (!activeUser) {
+                return;
+            }
+            chatHistory[activeUser.id] = [];
+            persistState();
+            renderChatLog();
+        }
+
+        async function copyToken(userId) {
+            const user = users.find((entry) => entry.id === userId);
+            if (!user?.token) {
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(user.token);
+            } catch {
+                alert('Copy failed.');
+            }
+        }
+
+        function removeUser(userId) {
+            users = users.filter((user) => user.id !== userId);
+            delete chatHistory[userId];
+
+            if (activeUserId === userId) {
+                activeUserId = users[0]?.id || null;
+            }
+
+            if (!activeUserId) {
+                syncSessionUser(null);
+                persistState();
+                renderUserList();
+                renderActiveSession();
+                renderChatLog();
+                window.location.replace('/login');
+                return;
+            }
+
+            syncSessionUser(getActiveUser());
+            persistState();
+            renderUserList();
+            renderActiveSession();
+            renderChatLog();
+        }
+
+        function logout() {
+            localStorage.removeItem(SESSION_USER_KEY);
+            clearSessionCookie();
+            window.location.replace('/login');
+        }
+
+        document.getElementById('conversation-id').addEventListener('change', saveActiveConversationSettings);
+        document.getElementById('session-note').addEventListener('change', saveActiveConversationSettings);
+        document.getElementById('prompt-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        loadState();
+        renderUserList();
+        renderActiveSession();
+        renderChatLog();
+        if (activeUserId) {
+            setActiveUser(activeUserId);
+        }
+    </script>
+</body>
+
+</html>

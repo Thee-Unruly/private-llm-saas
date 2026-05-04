@@ -7,6 +7,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 COPY test_ui.html .
+COPY chat_ui.html .
+COPY login.html .
+COPY signup.html .
 
 EXPOSE 8000
 
