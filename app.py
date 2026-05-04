@@ -447,6 +447,15 @@ def _extract_profile_facts(text: str) -> List[str]:
         name = canonical_name_match.group(1)
         facts.append(f"The user's name is {name}.")
 
+    possessive_name_match = re.search(
+        r"\b([A-Z][a-zA-Z'-]*)'s\s+name\s+is\s+([A-Z][a-zA-Z'-]*)\b",
+        normalized_text,
+        flags=re.IGNORECASE,
+    )
+    if possessive_name_match:
+        name = possessive_name_match.group(2)
+        facts.append(f"The user's name is {name}.")
+
     inferred_name_match = re.search(
         r"\b([A-Z][a-zA-Z'-]*)\s+prefers\s+(?:concise|brief)\s+answers\b",
         normalized_text,
@@ -468,6 +477,42 @@ def _extract_profile_facts(text: str) -> List[str]:
     if any(re.search(pattern, normalized_text, flags=re.IGNORECASE) for pattern in preference_patterns):
         facts.append("The user prefers concise answers.")
 
+    pet_owner_match = re.search(
+        r"\b([A-Z][a-zA-Z'-]*)\s+has\s+(?:a|an)\s+(?:beautiful\s+)?(?:pet|creature|cat|dog|animal)\s+named\s+[A-Z][a-zA-Z'-]*\b",
+        normalized_text,
+        flags=re.IGNORECASE,
+    )
+    if pet_owner_match:
+        owner_name = pet_owner_match.group(1)
+        facts.append(f"The user's name is {owner_name}.")
+
+    possessive_pet_owner_match = re.search(
+        r"\b([A-Z][a-zA-Z'-]*)'s\s+(?:pet|creature|cat|dog|animal)\s+is\s+named\s+[A-Z][a-zA-Z'-]*\b",
+        normalized_text,
+        flags=re.IGNORECASE,
+    )
+    if possessive_pet_owner_match:
+        owner_name = possessive_pet_owner_match.group(1)
+        facts.append(f"The user's name is {owner_name}.")
+
+    pet_named_match = re.search(
+        r"\b(?:the user|they|[A-Z][a-zA-Z'-]*)\s+ha(?:ve|s)\s+(?:a|an)\s+(?:beautiful\s+)?(?:pet|creature|cat|dog|animal)\s+named\s+([A-Z][a-zA-Z'-]*)\b",
+        normalized_text,
+        flags=re.IGNORECASE,
+    )
+    if pet_named_match:
+        pet_name = pet_named_match.group(1)
+        facts.append(f"The user has a pet named {pet_name}.")
+
+    joy_match = re.search(
+        r"\b([A-Z][a-zA-Z'-]*)\s+who\s+makes\s+(?:them|the user)\s+smile\s+a\s+lot\b",
+        normalized_text,
+        flags=re.IGNORECASE,
+    )
+    if joy_match:
+        subject_name = joy_match.group(1)
+        facts.append(f"{subject_name} makes the user smile a lot.")
+
     return facts
 
 
@@ -486,10 +531,6 @@ def _deduplicate_strings(items: List[str]) -> List[str]:
 def _build_profile_summary(memory_items: List[str]) -> str:
     extracted_facts: List[str] = []
     for item in memory_items:
-        stripped_item = item.strip()
-        if stripped_item.startswith("The user's name is ") or stripped_item.startswith("The user prefers "):
-            extracted_facts.append(stripped_item)
-            continue
         extracted_facts.extend(_extract_profile_facts(item))
 
     profile_facts = _deduplicate_strings(extracted_facts)
@@ -517,6 +558,10 @@ def _build_profile_reply(profile_summary: str) -> str:
             rendered_facts.append(line.replace("The user's name is ", "Your name is ").rstrip("."))
         elif line.startswith("The user prefers "):
             rendered_facts.append(line.replace("The user prefers ", "You prefer ").rstrip("."))
+        elif line.startswith("The user has a pet named "):
+            rendered_facts.append(line.replace("The user has a pet named ", "You have a pet named ").rstrip("."))
+        elif line.endswith(" makes the user smile a lot."):
+            rendered_facts.append(line.replace(" makes the user smile a lot.", " makes you smile a lot"))
     if not rendered_facts:
         return "I do not know anything about you yet. Share a few details and I will remember them for later chats."
     return "\n".join(rendered_facts) + "."
