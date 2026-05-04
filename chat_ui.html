@@ -577,7 +577,8 @@
                                 <div class="stat"><strong>Team ID</strong><span id="active-team-id">-</span></div>
                                 <div class="stat"><strong>Conversation ID</strong><span
                                         id="active-thread-preview">-</span></div>
-                                <div class="stat"><strong>Token</strong><span id="active-token-preview">-</span></div>
+                                <div class="stat"><strong>Session</strong><span id="active-session-status">Signed
+                                        out</span></div>
                             </div>
                         </div>
                     </section>
@@ -621,12 +622,7 @@
                         <label for="prompt-input">Message</label>
                         <textarea id="prompt-input" placeholder="Send a message as the active user..."></textarea>
                     </div>
-                    <div class="composer-grid">
-                        <div class="field">
-                            <label for="token-override">Temporary Token Override</label>
-                            <input id="token-override" type="text"
-                                placeholder="Optional. Use a different token for one-off testing.">
-                        </div>
+                    <div class="button-row">
                         <button class="primary" id="send-button" type="button" onclick="sendMessage()">Send
                             Message</button>
                     </div>
@@ -728,16 +724,6 @@
             return users.find((user) => user.id === activeUserId) || null;
         }
 
-        function shortenToken(token) {
-            if (!token) {
-                return '-';
-            }
-            if (token.length < 20) {
-                return token;
-            }
-            return `${token.slice(0, 12)}...${token.slice(-8)}`;
-        }
-
         function defaultConversationId(user) {
             return user?.conversationId || `thread-${(user?.id || 'guest').slice(0, 8)}`;
         }
@@ -754,7 +740,6 @@
             const activeUser = getActiveUser();
             document.getElementById('conversation-id').value = activeUser ? defaultConversationId(activeUser) : '';
             document.getElementById('session-note').value = activeUser?.note || '';
-            document.getElementById('token-override').value = '';
             syncSessionUser(activeUser);
             persistState();
             renderUserList();
@@ -795,7 +780,6 @@
                         <div class="tiny user-sub">thread: ${escapeHtml(defaultConversationId(user))}</div>
                         <div class="user-actions">
                             <button class="${isActive ? 'primary' : 'secondary'}" type="button" onclick="setActiveUser('${user.id}')">${isActive ? 'Active' : 'Use This User'}</button>
-                            <button class="ghost" type="button" onclick="copyToken('${user.id}')">Copy Token</button>
                             <button class="ghost" type="button" onclick="removeUser('${user.id}')">Remove</button>
                         </div>
                     </article>
@@ -812,7 +796,7 @@
             document.getElementById('active-user-id').textContent = activeUser?.userId || '-';
             document.getElementById('active-team-id').textContent = activeUser?.teamId || '-';
             document.getElementById('active-thread-preview').textContent = activeUser ? defaultConversationId(activeUser) : '-';
-            document.getElementById('active-token-preview').textContent = activeUser ? shortenToken(activeUser.token) : '-';
+            document.getElementById('active-session-status').textContent = activeUser ? 'Signed in' : 'Signed out';
         }
 
         function renderChatLog() {
@@ -865,8 +849,6 @@
 
             const promptInput = document.getElementById('prompt-input');
             const sendButton = document.getElementById('send-button');
-            const tokenOverride = document.getElementById('token-override').value.trim();
-            const token = tokenOverride || activeUser.token;
             const message = (presetText || promptInput.value).trim();
             const conversationId = document.getElementById('conversation-id').value.trim() || defaultConversationId(activeUser);
 
@@ -885,7 +867,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
+                        Authorization: `Bearer ${activeUser.token}`
                     },
                     body: JSON.stringify({
                         message,
@@ -949,18 +931,6 @@
             chatHistory[activeUser.id] = [];
             persistState();
             renderChatLog();
-        }
-
-        async function copyToken(userId) {
-            const user = users.find((entry) => entry.id === userId);
-            if (!user?.token) {
-                return;
-            }
-            try {
-                await navigator.clipboard.writeText(user.token);
-            } catch {
-                alert('Copy failed.');
-            }
         }
 
         function removeUser(userId) {

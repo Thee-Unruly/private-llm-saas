@@ -15,6 +15,8 @@ import secrets
 import time
 import uuid
 from mem0 import Memory
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = FastAPI(title="Memory-Enabled Ollama API")
 
@@ -32,6 +34,7 @@ POSTGRES_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@postgres/litell
 APP_AUTH_SECRET = os.getenv("APP_AUTH_SECRET", "")
 ACCESS_TOKEN_TTL_SECONDS = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "86400"))
 AUTH_COOKIE_NAME = os.getenv("AUTH_COOKIE_NAME", "memory_chat_session")
+PASSWORD_HASH_ITERATIONS = int(os.getenv("PASSWORD_HASH_ITERATIONS", "100000"))
 TEST_UI_PATH = os.path.join(os.path.dirname(__file__), "test_ui.html")
 CHAT_UI_PATH = os.path.join(os.path.dirname(__file__), "chat_ui.html")
 LOGIN_UI_PATH = os.path.join(os.path.dirname(__file__), "login.html")
@@ -71,6 +74,35 @@ mem0_config = {
     }
 }
 memory = Memory.from_config(mem0_config)
+
+
+def _get_db_connection():
+    return psycopg2.connect(POSTGRES_URL)
+
+
+def _ensure_auth_tables() -> None:
+    with _get_db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS app_users (
+                    user_id TEXT PRIMARY KEY,
+                    team_id TEXT NOT NULL,
+                    email TEXT NOT NULL UNIQUE,
+                    display_name TEXT NOT NULL,
+                    company_name TEXT NOT NULL,
+                    max_budget DOUBLE PRECISION NOT NULL DEFAULT 10.0,
+                    password_hash TEXT NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+
+
+@app.on_event("startup")
+def startup() -> None:
+    _ensure_auth_tables()
 
 
 @app.get("/")
@@ -124,6 +156,119 @@ def _issue_access_token(user_id: str, team_id: str, email: str) -> str:
     )
 
 
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        PASSWORD_HASH_ITERATIONS,
+    )
+    return "$".join(
+        [
+            str(PASSWORD_HASH_ITERATIONS),
+            base64.urlsafe_b64encode(salt).decode("utf-8"),
+            base64.urlsafe_b64encode(digest).decode("utf-8"),
+        ]
+    )
+
+
+def _verify_password(password: str, stored_hash: str) -> bool:
+    try:
+        iterations_text, salt_text, digest_text = stored_hash.split("$", 2)
+        iterations = int(iterations_text)
+        salt = base64.urlsafe_b64decode(salt_text.encode("utf-8"))
+        expected_digest = base64.urlsafe_b64decode(digest_text.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
+
+    actual_digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        iterations,
+    )
+    return hmac.compare_digest(actual_digest, expected_digest)
+
+
+def _fetch_auth_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    with _get_db_connection() as connection:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT user_id, team_id, email, display_name, company_name, max_budget, password_hash
+                FROM app_users
+                WHERE email = %s
+                """,
+                (_normalize_email(email),),
+            )
+            row = cursor.fetchone()
+    return dict(row) if row else None
+
+
+def _fetch_auth_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+    with _get_db_connection() as connection:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT user_id, team_id, email, display_name, company_name, max_budget
+                FROM app_users
+                WHERE user_id = %s
+                """,
+                (user_id,),
+            )
+            row = cursor.fetchone()
+    return dict(row) if row else None
+
+
+def _create_auth_user(
+    *,
+    email: str,
+    display_name: str,
+    company_name: str,
+    password: str,
+    max_budget: float,
+) -> Dict[str, Any]:
+    normalized_email = _normalize_email(email)
+    user_id = str(uuid.uuid4())
+    team_id = str(uuid.uuid4())
+    password_hash = _hash_password(password)
+
+    with _get_db_connection() as connection:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO app_users (user_id, team_id, email, display_name, company_name, max_budget, password_hash)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING user_id, team_id, email, display_name, company_name, max_budget
+                """,
+                (user_id, team_id, normalized_email, display_name, company_name, max_budget, password_hash),
+            )
+            row = cursor.fetchone()
+    return dict(row)
+
+
+def _build_auth_response_payload(user: Dict[str, Any]) -> Dict[str, Any]:
+    access_token = _issue_access_token(
+        user_id=user["user_id"],
+        team_id=user["team_id"],
+        email=user["email"],
+    )
+    return {
+        "user_id": user["user_id"],
+        "team_id": user["team_id"],
+        "email": user["email"],
+        "display_name": user["display_name"],
+        "company_name": user["company_name"],
+        "max_budget": str(user.get("max_budget", 10.0)),
+        "access_token": access_token,
+    }
+
+
 def _identity_from_payload(payload: Dict[str, Any]) -> Dict[str, str]:
     user_id = payload.get("sub")
     team_id = payload.get("team_id")
@@ -166,7 +311,25 @@ class RegistrationRequest(BaseModel):
     max_budget: Optional[float] = 10.0
 
 
+class SignupRequest(BaseModel):
+    display_name: str
+    email: str
+    company_name: str
+    password: str
+    max_budget: Optional[float] = 10.0
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 class RegistrationResponse(BaseModel):
+    status: str
+    data: Dict[str, str]
+
+
+class AuthResponse(BaseModel):
     status: str
     data: Dict[str, str]
 
@@ -187,6 +350,44 @@ async def register(request: RegistrationRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/signup", response_model=AuthResponse)
+async def signup(request: SignupRequest):
+    email = _normalize_email(request.email)
+    display_name = request.display_name.strip()
+    company_name = request.company_name.strip()
+    password = request.password
+    max_budget = float(request.max_budget or 10.0)
+
+    if not display_name or not company_name or not email:
+        raise HTTPException(status_code=400, detail="Name, email, and company are required")
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    if _fetch_auth_user_by_email(email):
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+
+    try:
+        user = _create_auth_user(
+            email=email,
+            display_name=display_name,
+            company_name=company_name,
+            password=password,
+            max_budget=max_budget,
+        )
+        return {"status": "success", "data": _build_auth_response_payload(user)}
+    except psycopg2.Error as exc:
+        raise HTTPException(status_code=500, detail="Failed to create account") from exc
+
+
+@app.post("/login", response_model=AuthResponse)
+async def login(request: LoginRequest):
+    email = _normalize_email(request.email)
+    user = _fetch_auth_user_by_email(email)
+    if not user or not _verify_password(request.password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    return {"status": "success", "data": _build_auth_response_payload(user)}
 
 class ChatRequest(BaseModel):
     message: str
@@ -218,6 +419,8 @@ class IdentityResponse(BaseModel):
     user_id: str
     team_id: str
     email: str
+    display_name: Optional[str] = None
+    company_name: Optional[str] = None
 
 
 def _normalize_ollama_model(model_name: Optional[str]) -> str:
@@ -417,7 +620,14 @@ async def chat(request: ChatRequest, identity: Dict[str, str] = Depends(get_curr
 
 @app.get("/me", response_model=IdentityResponse)
 async def me(identity: Dict[str, str] = Depends(get_current_identity)):
-    return identity
+    auth_user = _fetch_auth_user_by_id(identity["user_id"])
+    if not auth_user:
+        return identity
+    return {
+        **identity,
+        "display_name": auth_user.get("display_name"),
+        "company_name": auth_user.get("company_name"),
+    }
 
 
 @app.get("/memories", response_model=Dict[str, List[MemoryRecord]])

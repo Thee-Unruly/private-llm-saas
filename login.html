@@ -277,37 +277,35 @@
         <main class="content-grid">
             <section class="panel hero">
                 <div class="eyebrow">Access</div>
-                <h1>Log in with an existing API key.</h1>
-                <p class="copy">Use this when you already have an access token and want to enter the chat app as that
-                    exact identity. The token is verified against <span class="mono">/me</span> before the chat screen
-                    opens.</p>
+                <h1>Log in with your email and password.</h1>
+                <p class="copy">This page now works like a normal app login. The backend stores your account record,
+                    verifies your credentials, and then opens the chat workspace for that user.</p>
                 <div class="feature-list">
-                    <div class="feature">Good for testing how one specific client or user sees memory-backed responses.
-                    </div>
-                    <div class="feature">If you do not have a token yet, create one first on the sign up page.</div>
+                    <div class="feature">You no longer need to paste an access token to get into the app.</div>
+                    <div class="feature">If you do not have an account yet, create one first on the sign up page.</div>
                 </div>
             </section>
 
             <section class="panel form-panel">
                 <div>
                     <div class="eyebrow">Login</div>
-                    <h2>Enter your token</h2>
-                    <p class="hint">This app currently uses token-based auth. Login here means verifying a token and
-                        carrying that identity into chat.</p>
+                    <h2>Enter your credentials</h2>
+                    <p class="hint">Use the email and password you created at sign up. The token is handled behind the
+                        scenes.</p>
                 </div>
                 <div class="field-grid">
                     <label for="api-base-url">API Base URL
                         <input id="api-base-url" type="text" value="http://localhost:8000">
                     </label>
-                    <label for="display-name">Display Name
-                        <input id="display-name" type="text" placeholder="Optional label for this login">
+                    <label for="email">Email
+                        <input id="email" type="email" placeholder="you@example.com">
                     </label>
-                    <label for="access-token">Access Token / API Key
-                        <textarea id="access-token" placeholder="Paste your token here"></textarea>
+                    <label for="password">Password
+                        <input id="password" type="password" placeholder="Enter your password">
                     </label>
                 </div>
                 <div class="button-row">
-                    <button class="primary" type="button" onclick="loginWithToken()">Log In And Open Chat</button>
+                    <button class="primary" type="button" onclick="loginWithPassword()">Log In And Open Chat</button>
                     <a class="button-link" href="/signup">Create A User First</a>
                 </div>
                 <div id="status" class="status"></div>
@@ -347,34 +345,36 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ users, activeUserId: user.id }));
         }
 
-        async function loginWithToken() {
-            const token = document.getElementById('access-token').value.trim();
-            const displayName = document.getElementById('display-name').value.trim();
-            if (!token) {
-                setStatus('Paste an access token first.', 'error');
+        async function loginWithPassword() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            if (!email || !password) {
+                setStatus('Email and password are required.', 'error');
                 return;
             }
 
-            setStatus('Verifying token...');
+            setStatus('Signing in...');
             try {
-                const response = await fetch(`${getApiBaseUrl()}/me`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                const response = await fetch(`${getApiBaseUrl()}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
                 });
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.detail || 'Token validation failed');
+                    throw new Error(data.detail || 'Login failed');
                 }
 
                 const user = {
                     id: crypto.randomUUID(),
-                    displayName: displayName || data.email,
-                    email: data.email,
-                    companyName: 'Imported token',
-                    token,
-                    userId: data.user_id,
-                    teamId: data.team_id,
-                    conversationId: `thread-${data.user_id.slice(0, 8)}`,
-                    source: 'imported',
+                    displayName: data.data.display_name || data.data.email,
+                    email: data.data.email,
+                    companyName: data.data.company_name,
+                    token: data.data.access_token,
+                    userId: data.data.user_id,
+                    teamId: data.data.team_id,
+                    conversationId: `thread-${data.data.user_id.slice(0, 8)}`,
+                    source: 'registered',
                     note: ''
                 };
 
@@ -382,7 +382,7 @@
                 localStorage.setItem(SESSION_USER_KEY, user.id);
                 sessionStorage.setItem(AUTH_HANDOFF_KEY, JSON.stringify(user));
                 localStorage.setItem('memory-chat-default-api-base', getApiBaseUrl());
-                setSessionCookie(token);
+                setSessionCookie(data.data.access_token);
                 setStatus('Login successful. Redirecting to chat...', 'success');
                 window.location.href = '/chat-ui';
             } catch (error) {

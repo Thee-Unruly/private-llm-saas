@@ -270,13 +270,13 @@
         <main class="content-grid">
             <section class="panel hero">
                 <div class="eyebrow">Registration</div>
-                <h1>Create a user, then enter chat.</h1>
-                <p class="copy">This page uses <span class="mono">/register</span> to create a new identity, store the
-                    returned token locally, and open the chat UI already signed in as that user.</p>
+                <h1>Create your account, then enter chat.</h1>
+                <p class="copy">This page creates a real account record in the backend with your name, email,
+                    company, and password, then signs you into the chat workspace.</p>
                 <div class="feature-list">
-                    <div class="feature">Create separate users with different emails when you want to compare memory
-                        isolation and response behavior.</div>
-                    <div class="feature">After signup, the chat page will automatically pick up the new identity.</div>
+                    <div class="feature">Your credentials are stored server-side, so you do not need to paste tokens
+                        later.</div>
+                    <div class="feature">After signup, the chat page opens already signed in as that new user.</div>
                 </div>
             </section>
 
@@ -284,21 +284,24 @@
                 <div>
                     <div class="eyebrow">Sign Up</div>
                     <h2>Create account</h2>
-                    <p class="hint">This is still your current token-based backend. Sign up here means the app issues a
-                        new access token and carries it into chat.</p>
+                    <p class="hint">Use normal sign-up credentials here. The backend creates your account and handles
+                        the token for the app.</p>
                 </div>
                 <div class="field-grid two-col">
                     <label for="api-base-url">API Base URL
                         <input id="api-base-url" type="text" value="http://localhost:8000">
                     </label>
-                    <label for="display-name">Display Name
-                        <input id="display-name" type="text" placeholder="Client A">
+                    <label for="display-name">Full Name
+                        <input id="display-name" type="text" placeholder="Ibrahim Fadhili">
                     </label>
                     <label for="email">Email
                         <input id="email" type="email" placeholder="client@example.com">
                     </label>
                     <label for="company">Company
                         <input id="company" type="text" placeholder="Client A Ltd">
+                    </label>
+                    <label for="password">Password
+                        <input id="password" type="password" placeholder="At least 8 characters">
                     </label>
                     <label for="budget">Max Budget
                         <input id="budget" type="number" min="0" step="0.1" value="10">
@@ -349,21 +352,24 @@
             const displayName = document.getElementById('display-name').value.trim();
             const email = document.getElementById('email').value.trim();
             const companyName = document.getElementById('company').value.trim();
+            const password = document.getElementById('password').value;
             const maxBudget = Number(document.getElementById('budget').value || '10');
 
-            if (!email || !companyName) {
-                setStatus('Email and company are required.', 'error');
+            if (!displayName || !email || !companyName || !password) {
+                setStatus('Name, email, company, and password are required.', 'error');
                 return;
             }
 
             setStatus('Creating user...');
             try {
-                const response = await fetch(`${getApiBaseUrl()}/register`, {
+                const response = await fetch(`${getApiBaseUrl()}/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        display_name: displayName,
                         email,
                         company_name: companyName,
+                        password,
                         max_budget: maxBudget
                     })
                 });
@@ -374,9 +380,9 @@
 
                 const user = {
                     id: crypto.randomUUID(),
-                    displayName: displayName || email,
-                    email,
-                    companyName,
+                    displayName: data.data.display_name || displayName,
+                    email: data.data.email,
+                    companyName: data.data.company_name,
                     token: data.data.access_token,
                     userId: data.data.user_id,
                     teamId: data.data.team_id,
