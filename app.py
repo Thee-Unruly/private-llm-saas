@@ -37,7 +37,8 @@ mem0_config = {
             "user": "user",
             "password": "pass",
             "host": "postgres",
-            "port": 5432
+            "port": 5432,
+            "embedding_model_dims": 768
         }
     }
 }
@@ -72,7 +73,7 @@ class LiteLLMSaaSManager:
         }
         if team_id:
             data["teams"] = [team_id]
-        
+
         response = requests.post(url, headers=self.headers, json=data)
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.text)
@@ -103,19 +104,13 @@ class RegistrationRequest(BaseModel):
 @app.post("/register")
 async def register(request: RegistrationRequest):
     try:
-        # 1. Create Team
         team_id = manager.create_team(team_name=request.company_name, max_budget=request.max_budget)
-        
-        # 2. Create User
         user_id = manager.create_user(email=request.email, team_id=team_id)
-        
-        # 3. Generate Key
         api_key = manager.generate_key_for_user(
-            user_id=user_id, 
-            team_id=team_id, 
+            user_id=user_id,
+            team_id=team_id,
             key_alias=f"{request.company_name} Primary Key"
         )
-        
         return {
             "status": "success",
             "data": {
@@ -135,8 +130,12 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
-        # 1. Retrieve relevant past memories for this user
-        past_memories = memory.search(query=request.message, filters={"user_id": request.user_id}, limit=5)
+        # 1. Retrieve relevant past memories — user_id as direct param ✅
+        past_memories = memory.search(
+            query=request.message,
+            filters={"user_id": request.user_id},
+            limit=5
+        )
         memory_text = "\n".join([m["memory"] for m in past_memories.get("results", [])])
 
         system_prompt = "You are a helpful assistant."
@@ -162,7 +161,7 @@ async def chat(request: ChatRequest):
 
         assistant_reply = response.json()["choices"][0]["message"]["content"]
 
-        # 3. Save this exchange to memory
+        # 3. Save exchange to memory — user_id as direct param ✅
         memory.add(
             [
                 {"role": "user", "content": request.message},
@@ -171,12 +170,21 @@ async def chat(request: ChatRequest):
             user_id=request.user_id
         )
 
-        return {"reply": assistant_reply, "memories_used": len(past_memories.get("results", []))}
+        return {
+            "reply": assistant_reply,
+            "memories_used": len(past_memories.get("results", []))
+        }
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/memories/{user_id}")
+async def get_memories(user_id: str):
+    # get_all also uses user_id as direct param ✅
+    results = memory.get_all(filters={"user_id": user_id})
+    return results
 
 @app.get("/health")
 async def health():
